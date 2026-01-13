@@ -1,11 +1,22 @@
 // main.js
-// Initializes modules and loads views
+// Handles UI collapse behavior + generator initialization
 
 import { initGenerator } from "./src/modules/generator.js";
-import { loadVaultView } from "./src/views/vault.html";
-import { loadSecurityInfo } from "./src/views/security.html";
 
-// Basic initialization (will expand later)
 document.addEventListener("DOMContentLoaded", () => {
     initGenerator();
+
+    const secBtn = document.getElementById("toggle-security");
+    const secContent = document.getElementById("security-content");
+
+    const vBtn = document.getElementById("toggle-vault");
+    const vContent = document.getElementById("vault-content");
+
+    secBtn.addEventListener("click", () => {
+        secContent.classList.toggle("active");
+    });
+
+    vBtn.addEventListener("click", () => {
+        vContent.classList.toggle("active");
+    });
 });

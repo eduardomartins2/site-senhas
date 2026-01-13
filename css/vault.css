@@ -1,0 +1,4 @@
+/* Future vault UI will be built on top */
+#vault-content {
+    color: var(--text-muted);
+}

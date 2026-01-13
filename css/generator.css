@@ -1,0 +1,6 @@
+.generator-form label {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}

@@ -19,53 +19,51 @@
 
         <!-- Password Generator Section -->
         <section class="section-card" id="password-generator">
-            <header>
+            <header class="section-header">
                 <h1>Gerador de Senhas Fortes</h1>
             </header>
 
             <form class="generator-form" onsubmit="return false;">
                 <label for="length">Quantidade de Caracteres:</label>
-                <input type="number" id="length" min="4" max="30" value="12" />
+                <input type="number" id="length" min="4" max="30" value="12" class="input-field" />
 
                 <div class="checkbox-group">
-                    <label>
-                        <input type="checkbox" id="uppercase" checked />
-                        Incluir Letras Maiúsculas
-                    </label>
-
-                    <label>
-                        <input type="checkbox" id="numbers" checked />
-                        Incluir Números
-                    </label>
-
-                    <label>
-                        <input type="checkbox" id="symbols" checked />
-                        Incluir Caracteres Especiais
-                    </label>
+                    <label><input type="checkbox" id="uppercase" checked /> Incluir Letras Maiúsculas</label>
+                    <label><input type="checkbox" id="numbers" checked /> Incluir Números</label>
+                    <label><input type="checkbox" id="symbols" checked /> Incluir Caracteres Especiais</label>
                 </div>
 
                 <button class="btn-primary" id="generate-btn">Gerar Senha</button>
 
-                <div class="output">
-                    <input type="text" id="password" readonly />
+                <div class="output-box">
+                    <input type="text" id="password" readonly class="output-field" />
                     <button class="btn-secondary" id="copy-password">Copiar</button>
                 </div>
             </form>
         </section>
 
-        <!-- Security Info Toggle -->
-        <section class="section-card" id="security-tips" hidden>
-            <!-- security.html será injetado aqui -->
+        <!-- Security Information (toggle) -->
+        <section class="section-card collapsible">
+            <button class="collapse-btn" id="toggle-security">
+                Dicas de Segurança
+            </button>
+            <div class="collapse-content" id="security-content">
+                <p>(As dicas serão carregadas aqui em breve...)</p>
+            </div>
         </section>
 
         <!-- Password Vault -->
-        <section class="section-card" id="password-vault">
-            <!-- vault.html será injetado aqui -->
+        <section class="section-card collapsible">
+            <button class="collapse-btn" id="toggle-vault">
+                Cofre de Senhas
+            </button>
+            <div class="collapse-content" id="vault-content">
+                <p>Cofre bloqueado. Em breve: criação da palavra-passe.</p>
+            </div>
         </section>
 
     </main>
 
-    <!-- Main initialization -->
     <script type="module" src="main.js"></script>
 </body>
 </html>
