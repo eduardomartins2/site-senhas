@@ -1,12 +1,12 @@
 import { generateSalt, deriveKey, encryptData, decryptData } from "./vault-crypto.js";
+import { loadVault, addEntry, updateEntry, deleteEntry } from "./vault-storage.js";
 
-// Nome do item no localStorage
 const VAULT_KEY = "secure_vault";
 
 export function initVaultUI() {
     console.log("Vault UI initialized");
 
-    // Elementos de tela
+    // Elementos da interface
     const startScreen = document.getElementById("vault-start-screen");
     const createScreen = document.getElementById("vault-create-screen");
     const unlockScreen = document.getElementById("vault-unlock-screen");
@@ -15,20 +15,23 @@ export function initVaultUI() {
     // Botões
     const btnStartCreate = document.getElementById("vault-start-create");
     const btnStartUnlock = document.getElementById("vault-start-unlock");
-
     const btnBackFromCreate = document.getElementById("vault-back-from-create");
     const btnBackFromUnlock = document.getElementById("vault-back-from-unlock");
-
     const btnCreateVault = document.getElementById("vault-create-btn");
     const btnUnlockVault = document.getElementById("vault-unlock-btn");
+    const btnAddEntry = document.getElementById("vault-add-entry-btn");
 
     // Inputs
     const inputCreatePass = document.getElementById("vault-create-pass");
     const inputCreateConfirm = document.getElementById("vault-create-pass-confirm");
     const inputUnlockPass = document.getElementById("vault-unlock-pass");
 
-    // ----- Navegação -----
+    const inputNewName = document.getElementById("new-entry-name");
+    const inputNewUser = document.getElementById("new-entry-username");
+    const inputNewPass = document.getElementById("new-entry-password");
+    const inputNewTags = document.getElementById("new-entry-tags");
 
+    // Navegação
     function hideAll() {
         startScreen.style.display = "none";
         createScreen.style.display = "none";
@@ -56,8 +59,7 @@ export function initVaultUI() {
         startScreen.style.display = "block";
     });
 
-    // ----- Criar Cofre -----
-
+    // Criar Cofre
     btnCreateVault.addEventListener("click", async () => {
         const pass = inputCreatePass.value.trim();
         const pass2 = inputCreateConfirm.value.trim();
@@ -72,21 +74,15 @@ export function initVaultUI() {
             return;
         }
 
-        // Criar salt
         const salt = await generateSalt();
-
-        // Derivar chave
         const key = await deriveKey(pass, salt);
 
-        // Criar cofre vazio
         const initialVault = {
             entries: []
         };
 
-        // Criptografar
         const encrypted = await encryptData(key, initialVault);
 
-        // Salvar no localStorage
         const vaultToSave = {
             salt: arrayToBase64(salt),
             iv: arrayToBase64(encrypted.iv),
@@ -101,8 +97,7 @@ export function initVaultUI() {
         unlockScreen.style.display = "block";
     });
 
-    // ----- Desbloquear Cofre -----
-
+    // Desbloquear Cofre
     btnUnlockVault.addEventListener("click", async () => {
         const pass = inputUnlockPass.value.trim();
 
@@ -132,16 +127,71 @@ export function initVaultUI() {
         hideAll();
         unlockedSection.style.display = "block";
 
-        console.log("Conteúdo do cofre:", decrypted);
+        window.__vault_key = key;
+        renderVaultEntries(decrypted.entries);
+    });
+
+    // Adicionar nova entrada
+    btnAddEntry.addEventListener("click", async () => {
+        const name = inputNewName.value.trim();
+        const user = inputNewUser.value.trim();
+        const pass = inputNewPass.value.trim();
+        const tags = inputNewTags.value.split(",").map(t => t.trim()).filter(Boolean);
+
+        if (!name || !user || !pass) {
+            alert("Preencha título, usuário e senha.");
+            return;
+        }
+
+        await addEntry(window.__vault_key, name, user, pass, tags);
+
+        const updated = await loadVault(window.__vault_key);
+        renderVaultEntries(updated.entries);
+
+        inputNewName.value = "";
+        inputNewUser.value = "";
+        inputNewPass.value = "";
+        inputNewTags.value = "";
     });
 }
 
-// Helpers de Base64
-
+// Helpers Base64
 function arrayToBase64(arr) {
     return btoa(String.fromCharCode(...arr));
 }
 
 function base64ToArray(b64) {
     return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+// Renderizar itens
+function renderVaultEntries(entries) {
+    const list = document.getElementById("vault-entries");
+    list.innerHTML = "";
+
+    entries.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "vault-item";
+
+        div.innerHTML = `
+            <h4>${item.title}</h4>
+            <p><b>Usuário:</b> ${item.username}</p>
+            <p><b>Senha:</b> ${item.password}</p>
+            <p><b>Tags:</b> ${item.tags.join(", ")}</p>
+            <button class="vault-delete-btn" data-id="${item.id}">Excluir</button>
+        `;
+
+        list.appendChild(div);
+    });
+
+    list.querySelectorAll(".vault-delete-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const id = e.target.dataset.id;
+
+            await deleteEntry(window.__vault_key, id);
+
+            const updated = await loadVault(window.__vault_key);
+            renderVaultEntries(updated.entries);
+        });
+    });
 }
