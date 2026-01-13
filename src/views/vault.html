@@ -1,4 +1,41 @@
-<!-- vault.html -->
-<div class="vault-container">
-    <!-- Vault UI will be added in the next stage -->
+<div class="vault-wrapper">
+    <h2>Cofre de Senhas</h2>
+
+    <p class="vault-description">
+        Proteja suas senhas com uma palavra-passe segura.  
+        Após desbloquear, você poderá adicionar, editar e remover entradas.
+    </p>
+
+    <!-- Área bloqueada -->
+    <div id="vault-locked-section">
+        <label for="vault-passphrase" class="vault-label">Palavra-passe:</label>
+        <input type="password" id="vault-passphrase" class="vault-input" placeholder="Digite para desbloquear">
+
+        <button id="vault-unlock-btn" class="vault-btn">Desbloquear Cofre</button>
+
+        <button id="vault-reset-btn" class="vault-reset-btn">Resetar Cofre</button>
+
+        <div id="vault-reset-warning" class="vault-reset-warning" style="display:none;">
+            <p>Isso apagará TODAS as senhas salvas. Digite <strong>sim</strong> para confirmar:</p>
+            <input id="vault-reset-confirm" class="vault-input" placeholder="Digite: sim">
+            <button id="vault-reset-confirm-btn" class="vault-btn">Confirmar Reset</button>
+        </div>
+    </div>
+
+    <!-- Área desbloqueada -->
+    <div id="vault-unlocked-section" style="display:none;">
+
+        <div class="add-entry-area">
+            <h3>Nova Senha</h3>
+            <input id="new-entry-name" class="vault-input" placeholder="Nome (ex: Email Gmail)">
+            <input id="new-entry-username" class="vault-input" placeholder="Usuário / Email">
+            <input id="new-entry-password" class="vault-input" placeholder="Senha">
+            <input id="new-entry-tags" class="vault-input" placeholder="Tags (ex: pessoal, trabalho)">
+
+            <button id="vault-add-entry-btn" class="vault-btn">Salvar Senha</button>
+        </div>
+
+        <h3>Senhas Salvas</h3>
+        <div id="vault-entries" class="vault-list"></div>
+    </div>
 </div>
