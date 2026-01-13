@@ -1,41 +1,54 @@
 <div class="vault-wrapper">
+
     <h2>Cofre de Senhas</h2>
 
     <p class="vault-description">
-        Proteja suas senhas com uma palavra-passe segura.  
-        Após desbloquear, você poderá adicionar, editar e remover entradas.
+        Proteja suas senhas com uma palavra-passe forte.  
+        Escolha entre criar um novo cofre ou desbloquear um já existente.
     </p>
 
-    <!-- Área bloqueada -->
-    <div id="vault-locked-section">
-        <label for="vault-passphrase" class="vault-label">Palavra-passe:</label>
-        <input type="password" id="vault-passphrase" class="vault-input" placeholder="Digite para desbloquear">
+    <!-- Tela inicial (seleção) -->
+    <div id="vault-start-screen">
+        <button id="vault-start-create" class="vault-btn">Criar Cofre</button>
+        <button id="vault-start-unlock" class="vault-btn">Desbloquear Cofre</button>
+    </div>
 
-        <button id="vault-unlock-btn" class="vault-btn">Desbloquear Cofre</button>
+    <!-- Criar Cofre -->
+    <div id="vault-create-screen" style="display:none;">
+        <h3>Criar Novo Cofre</h3>
 
-        <button id="vault-reset-btn" class="vault-reset-btn">Resetar Cofre</button>
+        <input type="password" id="vault-create-pass" class="vault-input" placeholder="Nova palavra-passe">
+        <input type="password" id="vault-create-pass-confirm" class="vault-input" placeholder="Confirmar palavra-passe">
 
-        <div id="vault-reset-warning" class="vault-reset-warning" style="display:none;">
-            <p>Isso apagará TODAS as senhas salvas. Digite <strong>sim</strong> para confirmar:</p>
-            <input id="vault-reset-confirm" class="vault-input" placeholder="Digite: sim">
-            <button id="vault-reset-confirm-btn" class="vault-btn">Confirmar Reset</button>
-        </div>
+        <button id="vault-create-btn" class="vault-btn">Criar Cofre</button>
+
+        <button id="vault-back-from-create" class="vault-secondary-btn">Voltar</button>
+    </div>
+
+    <!-- Desbloquear Cofre -->
+    <div id="vault-unlock-screen" style="display:none;">
+        <h3>Desbloquear Cofre Existente</h3>
+
+        <input type="password" id="vault-unlock-pass" class="vault-input" placeholder="Palavra-passe">
+        <button id="vault-unlock-btn" class="vault-btn">Desbloquear</button>
+
+        <button id="vault-back-from-unlock" class="vault-secondary-btn">Voltar</button>
     </div>
 
     <!-- Área desbloqueada -->
-    <div id="vault-unlocked-section" style="display:none;">
+    <div id="vault-unlocked-section" style="display:none; margin-top:20px;">
 
-        <div class="add-entry-area">
-            <h3>Nova Senha</h3>
-            <input id="new-entry-name" class="vault-input" placeholder="Nome (ex: Email Gmail)">
-            <input id="new-entry-username" class="vault-input" placeholder="Usuário / Email">
-            <input id="new-entry-password" class="vault-input" placeholder="Senha">
-            <input id="new-entry-tags" class="vault-input" placeholder="Tags (ex: pessoal, trabalho)">
+        <h3>Adicionar Nova Senha</h3>
 
-            <button id="vault-add-entry-btn" class="vault-btn">Salvar Senha</button>
-        </div>
+        <input id="new-entry-name" class="vault-input" placeholder="Título (ex: Gmail)">
+        <input id="new-entry-username" class="vault-input" placeholder="Usuário / Email">
+        <input id="new-entry-password" class="vault-input" placeholder="Senha">
+        <input id="new-entry-tags" class="vault-input" placeholder="Tags (ex: pessoal, trabalho)">
 
-        <h3>Senhas Salvas</h3>
+        <button id="vault-add-entry-btn" class="vault-btn">Salvar</button>
+
+        <h3 style="margin-top:25px;">Senhas Salvas</h3>
         <div id="vault-entries" class="vault-list"></div>
     </div>
+
 </div>
