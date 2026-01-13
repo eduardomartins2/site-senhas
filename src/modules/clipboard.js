@@ -1,21 +1,42 @@
 // clipboard.js
-// Handles password copying to clipboard
+// Guaranteed cross-browser copy method (no navigator.clipboard)
 
 export function initCopyButton() {
     const btn = document.getElementById("copy-password");
     const passwordField = document.getElementById("password");
 
-    if (!btn) return;
+    if (!btn || !passwordField) {
+        console.error("Copy button or password field not found");
+        return;
+    }
 
-    btn.addEventListener("click", async () => {
-        if (!passwordField.value) return;
+    btn.addEventListener("click", (e) => {
+        e.preventDefault();
 
-        try {
-            await navigator.clipboard.writeText(passwordField.value);
+        const text = passwordField.value;
+        if (!text) return;
+
+        // Create invisible textarea
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+
+        textarea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textarea);
+
+        if (successful) {
             btn.innerText = "Copiado!";
-            setTimeout(() => (btn.innerText = "Copiar"), 1200);
-        } catch (err) {
-            console.error("Clipboard error:", err);
+            btn.style.background = "var(--primary-dark)";
+            setTimeout(() => {
+                btn.innerText = "Copiar";
+                btn.style.background = "";
+            }, 1200);
+        } else {
+            alert("Não foi possível copiar a senha.");
         }
     });
 }
