@@ -98,6 +98,41 @@ export function initVaultUI() {
         lockoutUntil = 0;
     }
 
+    function validateMasterPassword(password) {
+        const minLength = 12;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+        const noCommonPatterns = !/(123|abc|qwe|password|senha)/i.test(password);
+        
+        const issues = [];
+        
+        if (password.length < minLength) {
+            issues.push(`Mínimo ${minLength} caracteres`);
+        }
+        if (!hasUpperCase) {
+            issues.push("Letra maiúscula");
+        }
+        if (!hasLowerCase) {
+            issues.push("Letra minúscula");
+        }
+        if (!hasNumbers) {
+            issues.push("Número");
+        }
+        if (!hasSpecialChars) {
+            issues.push("Caractere especial");
+        }
+        if (!noCommonPatterns) {
+            issues.push("Evite padrões comuns");
+        }
+        
+        return {
+            isValid: issues.length === 0,
+            issues: issues
+        };
+    }
+
     function lockVault() {
         if (window.__vault_key) {
             clearVaultKey();
@@ -162,6 +197,14 @@ export function initVaultUI() {
 
         if (pass !== pass2) {
             alert("As palavras-passe não coincidem.");
+            return;
+        }
+
+        // Validação forte da senha mestra
+        const validation = validateMasterPassword(pass);
+        if (!validation.isValid) {
+            const message = "Senha mestra muito fraca. Requisitos:\n• " + validation.issues.join("\n• ");
+            alert(message);
             return;
         }
 
