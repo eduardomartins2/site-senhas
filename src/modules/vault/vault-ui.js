@@ -1,5 +1,5 @@
 import { generateSalt, deriveKey, encryptData, decryptData } from "./vault-crypto.js";
-import { loadVault, addEntry, updateEntry, deleteEntry, exportVault } from "./vault-storage.js";
+import { loadVault, addEntry, updateEntry, deleteEntry, exportVault, importVault, mergeVault } from "./vault-storage.js";
 
 const VAULT_KEY = "secure_vault";
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutos
@@ -41,6 +41,7 @@ export function initVaultUI() {
 
     // Botão de exportação
     const btnExportVault = document.getElementById("vault-export-btn");
+    const btnImportVault = document.getElementById("vault-import-btn");
 
     // Auto-lock functions
     function resetAutoLockTimer() {
@@ -344,6 +345,68 @@ export function initVaultUI() {
             } catch (error) {
                 alert("Erro ao exportar cofre: " + error.message);
             }
+        });
+    }
+
+    // Importar Cofre
+    if (btnImportVault) {
+        btnImportVault.addEventListener("click", async () => {
+            if (!window.__vault_key) {
+                alert("Cofre não está desbloqueado.");
+                return;
+            }
+
+            // Criar input de arquivo
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            
+            fileInput.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                try {
+                    const fileContent = await file.text();
+                    
+                    const exportPassword = prompt("Digite a senha do arquivo de exportação:");
+                    if (!exportPassword) {
+                        return; // Usuário cancelou
+                    }
+
+                    // Importar e validar dados
+                    const importedData = await importVault(exportPassword, fileContent);
+                    
+                    // Confirmar importação
+                    const confirmMessage = `Importar ${importedData.metadata.entriesCount} senhas do cofre?\n\n` +
+                        `Data de exportação: ${new Date(importedData.metadata.originalExportDate).toLocaleDateString()}\n` +
+                        `Esta ação irá adicionar as senhas ao seu cofre atual.`;
+                    
+                    if (!confirm(confirmMessage)) {
+                        return;
+                    }
+
+                    // Mesclar com cofre atual
+                    const mergeResult = await mergeVault(window.__vault_key, importedData.vaultData);
+                    
+                    // Atualizar interface
+                    const updatedVault = await loadVault(window.__vault_key);
+                    renderVaultEntries(updatedVault.entries);
+
+                    const successMessage = `Importação concluída!\n\n` +
+                        `Total importado: ${mergeResult.totalImported}\n` +
+                        `Conflitos resolvidos: ${mergeResult.conflictsResolved}\n` +
+                        `Novas entradas: ${mergeResult.newEntriesAdded}\n` +
+                        `Total no cofre: ${mergeResult.totalEntries}`;
+                    
+                    alert(successMessage);
+                    resetAutoLockTimer();
+
+                } catch (error) {
+                    alert("Erro ao importar cofre: " + error.message);
+                }
+            };
+
+            fileInput.click();
         });
     }
 }

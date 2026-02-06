@@ -197,3 +197,112 @@ export async function exportVault(vaultKey, exportPassword) {
         throw new Error('Failed to export vault: ' + error.message);
     }
 }
+
+// Import vault from encrypted export file
+export async function importVault(exportPassword, importData) {
+    try {
+        // Parse and validate export file structure
+        let exportFile;
+        try {
+            exportFile = JSON.parse(importData);
+        } catch (parseError) {
+            throw new Error('Invalid export file format');
+        }
+
+        // Validate required fields
+        if (!exportFile.salt || !exportFile.iv || !exportFile.ciphertext || 
+            exportFile.type !== "password-vault-export" || exportFile.version !== "1.0") {
+            throw new Error('Invalid or unsupported export file');
+        }
+
+        // Derive key from export password
+        const importSalt = b64ToArr(exportFile.salt);
+        const importKey = await deriveKey(exportPassword, importSalt);
+
+        // Decrypt export data
+        const encryptedData = {
+            iv: b64ToArr(exportFile.iv),
+            ciphertext: b64ToArr(exportFile.ciphertext),
+            checksum: exportFile.checksum ? b64ToArr(exportFile.checksum) : null
+        };
+
+        const decryptedPackage = await decryptData(importKey, encryptedData);
+        if (!decryptedPackage) {
+            throw new Error('Invalid export password or corrupted data');
+        }
+
+        // Validate decrypted package structure
+        if (!decryptedPackage.version || !decryptedPackage.vaultData || 
+            !decryptedPackage.metadata || !decryptedPackage.exportedAt) {
+            throw new Error('Invalid export package structure');
+        }
+
+        // Validate vault data structure
+        const vaultData = decryptedPackage.vaultData;
+        if (!Array.isArray(vaultData.entries)) {
+            throw new Error('Invalid vault entries format');
+        }
+
+        // Validate each entry
+        for (const entry of vaultData.entries) {
+            if (!entry.id || !entry.title || !entry.username || !entry.password) {
+                throw new Error(`Invalid entry format: ${entry.title || 'unknown'}`);
+            }
+        }
+
+        return {
+            vaultData: vaultData,
+            metadata: {
+                importedAt: new Date().toISOString(),
+                originalExportDate: decryptedPackage.exportedAt,
+                entriesCount: vaultData.entries.length,
+                version: decryptedPackage.version
+            }
+        };
+
+    } catch (error) {
+        console.error('Import error:', error);
+        throw new Error('Failed to import vault: ' + error.message);
+    }
+}
+
+// Merge imported vault with existing vault
+export async function mergeVault(currentKey, importedVaultData) {
+    try {
+        // Load current vault
+        const currentVault = await loadVault(currentKey);
+        if (!currentVault) {
+            throw new Error('No current vault found');
+        }
+
+        // Create map of existing IDs to detect conflicts
+        const existingIds = new Set(currentVault.entries.map(e => e.id));
+        let conflicts = 0;
+        let added = 0;
+
+        // Process imported entries
+        for (const importedEntry of importedVaultData.entries) {
+            if (existingIds.has(importedEntry.id)) {
+                // Generate new ID for conflicting entry
+                importedEntry.id = uuid();
+                conflicts++;
+            }
+            currentVault.entries.push(importedEntry);
+            added++;
+        }
+
+        // Save merged vault
+        await saveEncryptedVault(await encryptVault(currentKey, currentVault));
+
+        return {
+            totalImported: importedVaultData.entries.length,
+            conflictsResolved: conflicts,
+            newEntriesAdded: added,
+            totalEntries: currentVault.entries.length
+        };
+
+    } catch (error) {
+        console.error('Merge error:', error);
+        throw new Error('Failed to merge vault: ' + error.message);
+    }
+}
