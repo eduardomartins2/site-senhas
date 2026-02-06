@@ -1,11 +1,60 @@
 // vault-storage.js
 // Handles vault CRUD operations (add, edit, delete entries)
 
-import { encryptData, decryptData, deriveKey } from "./vault-crypto.js";
+import { encryptData, decryptData, deriveKey, CryptoError } from "./vault-crypto.js";
 
 // Importar funções de criptografia necessárias
 async function generateSalt() {
     return crypto.getRandomValues(new Uint8Array(16));
+}
+
+// Safe logging without sensitive data
+function safeLog(message, data = {}) {
+    const safeData = { ...data };
+    
+    // Remove sensitive fields
+    delete safeData.vault;
+    delete safeData.key;
+    delete safeData.salt;
+    delete safeData.iv;
+    delete safeData.ciphertext;
+    delete safeData.checksum;
+    delete safeData.data;
+    delete safeData.encrypted;
+    delete safeData.decrypted;
+    delete safeData.pass;
+    delete safeData.password;
+    delete safeData.exportPassword;
+    delete safeData.fileContent;
+    
+    // Sanitize object properties
+    if (safeData.vaultData) {
+        safeData.vaultData = {
+            entriesCount: safeData.vaultData.entries?.length || 0,
+            hasData: !!safeData.vaultData.entries
+        };
+    }
+    
+    console.log(`[VaultStorage] ${message}`, safeData);
+}
+
+function safeError(message, error, context = {}) {
+    const safeContext = { ...context };
+    
+    // Remove sensitive fields from error context
+    delete safeContext.password;
+    delete safeContext.key;
+    delete safeContext.data;
+    delete safeContext.vault;
+    delete safeContext.encryptedData;
+    delete safeContext.fileContent;
+    
+    console.error(`[VaultStorage] ${message}`, {
+        error: error.message || error,
+        code: error.code || 'UNKNOWN',
+        context: safeContext,
+        timestamp: new Date().toISOString()
+    });
 }
 
 const VAULT_KEY = "secure_vault";
@@ -48,11 +97,25 @@ export async function loadEncryptedVault() {
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get(VAULT_KEY);
             
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onerror = () => {
+                safeError('Failed to load from IndexedDB', request.error);
+                reject(request.error);
+            };
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result) {
+                    safeLog('Loaded encrypted vault from IndexedDB', { 
+                        hasData: true,
+                        dataKeys: Object.keys(result.data || {})
+                    });
+                } else {
+                    safeLog('No vault data found in IndexedDB');
+                }
+                resolve(result ? result.data : null);
+            };
         });
     } catch (error) {
-        console.error("Failed to load from IndexedDB:", error);
+        safeError('Failed to access IndexedDB', error);
         return null;
     }
 }
@@ -66,11 +129,20 @@ export async function saveEncryptedVault(data) {
             const store = transaction.objectStore(STORE_NAME);
             const request = store.put({ id: VAULT_KEY, data });
             
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve();
+            request.onerror = () => {
+                safeError('Failed to save to IndexedDB', request.error);
+                reject(request.error);
+            };
+            request.onsuccess = () => {
+                safeLog('Saved encrypted vault to IndexedDB', { 
+                    success: true,
+                    dataKeys: Object.keys(data || {})
+                });
+                resolve();
+            };
         });
     } catch (error) {
-        console.error("Failed to save to IndexedDB:", error);
+        safeError('Failed to access IndexedDB for saving', error);
         throw error;
     }
 }
@@ -155,11 +227,17 @@ async function encryptVault(key, vault) {
 // Export vault encrypted with export password
 export async function exportVault(vaultKey, exportPassword) {
     try {
+        safeLog('Starting vault export process');
+        
         // Load current vault data
         const vault = await loadVault(vaultKey);
         if (!vault) {
-            throw new Error('No vault data to export');
+            throw new CryptoError('No vault data to export', 'NO_VAULT_DATA');
         }
+
+        safeLog('Vault loaded for export', { 
+            entriesCount: vault.entries?.length || 0 
+        });
 
         // Generate new salt for export encryption
         const exportSalt = await generateSalt();
@@ -178,6 +256,11 @@ export async function exportVault(vaultKey, exportPassword) {
             }
         };
 
+        safeLog('Created export package', { 
+            version: exportPackage.version,
+            entriesCount: exportPackage.metadata.entries 
+        });
+
         // Encrypt with export password
         const encrypted = await encryptData(exportKey, exportPackage);
         
@@ -191,33 +274,55 @@ export async function exportVault(vaultKey, exportPassword) {
             type: "password-vault-export"
         };
 
+        safeLog('Export file created successfully', { 
+            version: exportFile.version,
+            type: exportFile.type,
+            hasChecksum: !!exportFile.checksum
+        });
+
         return JSON.stringify(exportFile, null, 2);
     } catch (error) {
-        console.error('Export error:', error);
-        throw new Error('Failed to export vault: ' + error.message);
+        safeError('Export error', error, { 
+            operation: 'vault_export',
+            hasVaultKey: !!vaultKey,
+            hasExportPassword: !!exportPassword
+        });
+        throw new CryptoError('Failed to export vault: ' + error.message, 'EXPORT_FAILED', error);
     }
 }
 
 // Import vault from encrypted export file
 export async function importVault(exportPassword, importData) {
     try {
+        safeLog('Starting vault import process');
+        
         // Parse and validate export file structure
         let exportFile;
         try {
             exportFile = JSON.parse(importData);
         } catch (parseError) {
-            throw new Error('Invalid export file format');
+            throw new CryptoError('Invalid export file format', 'INVALID_FILE_FORMAT', parseError);
         }
+
+        safeLog('Export file parsed', { 
+            version: exportFile.version,
+            type: exportFile.type,
+            hasRequiredFields: !!(exportFile.salt && exportFile.iv && exportFile.ciphertext)
+        });
 
         // Validate required fields
         if (!exportFile.salt || !exportFile.iv || !exportFile.ciphertext || 
             exportFile.type !== "password-vault-export" || exportFile.version !== "1.0") {
-            throw new Error('Invalid or unsupported export file');
+            throw new CryptoError('Invalid or unsupported export file', 'INVALID_EXPORT_FILE');
         }
 
         // Derive key from export password
         const importSalt = b64ToArr(exportFile.salt);
         const importKey = await deriveKey(exportPassword, importSalt);
+
+        safeLog('Import key derived successfully', { 
+            saltLength: importSalt.length 
+        });
 
         // Decrypt export data
         const encryptedData = {
@@ -228,27 +333,41 @@ export async function importVault(exportPassword, importData) {
 
         const decryptedPackage = await decryptData(importKey, encryptedData);
         if (!decryptedPackage) {
-            throw new Error('Invalid export password or corrupted data');
+            throw new CryptoError('Invalid export password or corrupted data', 'DECRYPTION_FAILED');
         }
+
+        safeLog('Export data decrypted successfully', { 
+            hasVersion: !!decryptedPackage.version,
+            hasVaultData: !!decryptedPackage.vaultData,
+            hasMetadata: !!decryptedPackage.metadata
+        });
 
         // Validate decrypted package structure
         if (!decryptedPackage.version || !decryptedPackage.vaultData || 
             !decryptedPackage.metadata || !decryptedPackage.exportedAt) {
-            throw new Error('Invalid export package structure');
+            throw new CryptoError('Invalid export package structure', 'INVALID_PACKAGE_STRUCTURE');
         }
 
         // Validate vault data structure
         const vaultData = decryptedPackage.vaultData;
         if (!Array.isArray(vaultData.entries)) {
-            throw new Error('Invalid vault entries format');
+            throw new CryptoError('Invalid vault entries format', 'INVALID_ENTRIES_FORMAT');
         }
+
+        safeLog('Validating vault entries', { 
+            entriesCount: vaultData.entries.length 
+        });
 
         // Validate each entry
         for (const entry of vaultData.entries) {
             if (!entry.id || !entry.title || !entry.username || !entry.password) {
-                throw new Error(`Invalid entry format: ${entry.title || 'unknown'}`);
+                throw new CryptoError(`Invalid entry format: ${entry.title || 'unknown'}`, 'INVALID_ENTRY_FORMAT');
             }
         }
+
+        safeLog('All entries validated successfully', { 
+            validEntriesCount: vaultData.entries.length 
+        });
 
         return {
             vaultData: vaultData,
@@ -261,8 +380,13 @@ export async function importVault(exportPassword, importData) {
         };
 
     } catch (error) {
-        console.error('Import error:', error);
-        throw new Error('Failed to import vault: ' + error.message);
+        safeError('Import error', error, { 
+            operation: 'vault_import',
+            hasExportPassword: !!exportPassword,
+            hasImportData: !!importData,
+            importDataLength: importData?.length || 0
+        });
+        throw new CryptoError('Failed to import vault: ' + error.message, 'IMPORT_FAILED', error);
     }
 }
 
