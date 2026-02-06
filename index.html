@@ -20,24 +20,112 @@
         <!-- Password Generator Section -->
         <section class="section-card" id="password-generator">
             <header class="section-header">
-                <h1>Gerador de Senhas Fortes</h1>
+                <h1>Gerador de Senhas Avançado</h1>
             </header>
 
             <form class="generator-form" onsubmit="return false;">
-                <label for="length">Quantidade de Caracteres:</label>
-                <input type="number" id="length" min="4" max="30" value="12" class="input-field" />
-
-                <div class="checkbox-group">
-                    <label><input type="checkbox" id="uppercase" checked /> Incluir Letras Maiúsculas</label>
-                    <label><input type="checkbox" id="numbers" checked /> Incluir Números</label>
-                    <label><input type="checkbox" id="symbols" checked /> Incluir Caracteres Especiais</label>
+                <!-- Strength Presets -->
+                <div class="strength-presets">
+                    <label class="preset-label">Força da Senha:</label>
+                    <div class="preset-buttons">
+                        <button type="button" class="preset-btn weak" data-strength="weak">Fraca</button>
+                        <button type="button" class="preset-btn medium" data-strength="medium">Média</button>
+                        <button type="button" class="preset-btn strong" data-strength="strong">Forte</button>
+                        <button type="button" class="preset-btn very-strong" data-strength="very_strong">Muito Forte</button>
+                    </div>
                 </div>
 
-                <button class="btn-primary" id="generate-btn">Gerar Senha</button>
+                <!-- Custom Options -->
+                <div class="custom-options">
+                    <div class="option-row">
+                        <label for="length">Comprimento:</label>
+                        <input type="number" id="length" min="4" max="128" value="16" class="input-field" />
+                        <span class="length-info">caracteres</span>
+                    </div>
 
-                <div class="output-box">
-                    <input type="text" id="password" readonly class="output-field" />
-                    <button type="button" class="btn-secondary" id="copy-password">Copiar</button>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="lowercase" checked /> Letras Minúsculas</label>
+                        <label><input type="checkbox" id="uppercase" checked /> Letras Maiúsculas</label>
+                        <label><input type="checkbox" id="numbers" checked /> Números</label>
+                        <label><input type="checkbox" id="symbols" checked /> Símbolos</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="exclude-similar" /> Excluir Similares (i,l,1,L,o,0)</label>
+                        <label><input type="checkbox" id="exclude-ambiguous" /> Excluir Ambíguos ({ } [ ] ( ) / \ ' " ` ~ , ; . < >)</label>
+                    </div>
+                </div>
+
+                <!-- Generation Mode -->
+                <div class="generation-mode">
+                    <label class="mode-label">Modo de Geração:</label>
+                    <div class="mode-buttons">
+                        <button type="button" class="mode-btn active" data-mode="password">Senha</button>
+                        <button type="button" class="mode-btn" data-mode="passphrase">Passphrase</button>
+                        <button type="button" class="mode-btn" data-mode="multiple">Múltiplas</button>
+                    </div>
+                </div>
+
+                <!-- Passphrase Options (hidden by default) -->
+                <div class="passphrase-options" id="passphrase-options" style="display: none;">
+                    <div class="option-row">
+                        <label for="word-count">Palavras:</label>
+                        <input type="number" id="word-count" min="3" max="10" value="4" class="input-field" />
+                    </div>
+                    <div class="option-row">
+                        <label for="separator">Separador:</label>
+                        <input type="text" id="separator" value="-" class="input-field" />
+                    </div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="capitalize-words" /> Capitalizar Palavras</label>
+                        <label><input type="checkbox" id="include-numbers" /> Incluir Números</label>
+                    </div>
+                </div>
+
+                <!-- Multiple Options (hidden by default) -->
+                <div class="multiple-options" id="multiple-options" style="display: none;">
+                    <div class="option-row">
+                        <label for="generate-count">Quantidade:</label>
+                        <input type="number" id="generate-count" min="1" max="20" value="5" class="input-field" />
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button class="btn-primary btn-large" id="generate-btn">Gerar Senha</button>
+
+                <!-- Output and Analysis -->
+                <div class="output-section">
+                    <div class="output-box">
+                        <input type="text" id="password" readonly class="output-field" placeholder="Senha gerada aparecerá aqui..." />
+                        <button type="button" class="btn-secondary" id="copy-password">📋 Copiar</button>
+                    </div>
+
+                    <!-- Security Analysis -->
+                    <div class="security-analysis" id="security-analysis" style="display: none;">
+                        <div class="analysis-header">
+                            <h3>Análise de Segurança</h3>
+                        </div>
+                        <div class="analysis-content">
+                            <div class="strength-meter">
+                                <label>Força:</label>
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strength-fill"></div>
+                                    <span class="strength-text" id="strength-text">-</span>
+                                </div>
+                            </div>
+                            <div class="entropy-info">
+                                <label>Entropia:</label>
+                                <span id="entropy-value">-</span> bits
+                            </div>
+                            <div class="crack-time">
+                                <label>Tempo de Quebra:</label>
+                                <span id="crack-time">-</span>
+                            </div>
+                            <div class="feedback-list" id="feedback-list">
+                                <!-- Feedback messages will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </section>

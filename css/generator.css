@@ -4,3 +4,292 @@
     font-size: 0.95rem;
     color: var(--text-muted);
 }
+
+/* Advanced Generator Styles */
+.generator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Strength Presets */
+.strength-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.preset-label {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.preset-btn {
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.preset-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.preset-btn.weak { border-color: var(--danger); }
+.preset-btn.weak:hover { background: var(--danger); color: #fff; }
+
+.preset-btn.medium { border-color: var(--warning); }
+.preset-btn.medium:hover { background: var(--warning); color: #000; }
+
+.preset-btn.strong { border-color: var(--primary); }
+.preset-btn.strong:hover { background: var(--primary); color: #fff; }
+
+.preset-btn.very-strong { 
+    border-color: var(--accent); 
+    background: linear-gradient(135deg, var(--accent), var(--primary));
+    color: #fff;
+}
+
+/* Custom Options */
+.custom-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background: var(--bg-soft);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.option-row label {
+    min-width: 140px;
+    font-weight: 500;
+}
+
+.length-info {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Generation Mode */
+.generation-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mode-label {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.mode-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.mode-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-btn:hover {
+    border-color: var(--primary);
+}
+
+.mode-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* Hidden Options */
+.passphrase-options,
+.multiple-options {
+    display: none;
+    padding: 16px;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-top: 12px;
+}
+
+.passphrase-options.show,
+.multiple-options.show {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Output Section */
+.output-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.output-box {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.output-field {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    transition: border-color 0.2s;
+}
+
+.output-field:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Security Analysis */
+.security-analysis {
+    padding: 20px;
+    background: var(--bg-soft);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.analysis-header h3 {
+    margin: 0 0 16px 0;
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.analysis-content {
+    display: grid;
+    gap: 16px;
+}
+
+.strength-meter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.strength-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.strength-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.strength-fill.weak { background: var(--danger); width: 25%; }
+.strength-fill.medium { background: var(--warning); width: 50%; }
+.strength-fill.strong { background: var(--primary); width: 75%; }
+.strength-fill.very_strong { background: var(--accent); width: 100%; }
+
+.strength-text {
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.entropy-info,
+.crack-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.entropy-info label,
+.crack-time label {
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.entropy-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.crack-time span {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.feedback-list {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-radius: 6px;
+}
+
+.feedback-list ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.feedback-list li {
+    margin: 4px 0;
+    color: var(--warning);
+}
+
+/* Large Button */
+.btn-large {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .preset-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .mode-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .output-box {
+        flex-direction: column;
+    }
+    
+    .strength-meter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
