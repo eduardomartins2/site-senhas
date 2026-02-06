@@ -2,6 +2,10 @@ import { generateSalt, deriveKey, encryptData, decryptData } from "./vault-crypt
 import { loadVault, addEntry, updateEntry, deleteEntry } from "./vault-storage.js";
 
 const VAULT_KEY = "secure_vault";
+const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+
+let autoLockTimer = null;
+let lastActivity = Date.now();
 
 export function initVaultUI() {
     console.log("Vault UI initialized");
@@ -30,6 +34,35 @@ export function initVaultUI() {
     const inputNewUser = document.getElementById("new-entry-username");
     const inputNewPass = document.getElementById("new-entry-password");
     const inputNewTags = document.getElementById("new-entry-tags");
+
+    // Auto-lock functions
+    function resetAutoLockTimer() {
+        lastActivity = Date.now();
+        if (autoLockTimer) {
+            clearTimeout(autoLockTimer);
+        }
+        autoLockTimer = setTimeout(lockVault, AUTO_LOCK_TIMEOUT);
+    }
+
+    function lockVault() {
+        if (window.__vault_key) {
+            window.__vault_key = null;
+            hideAll();
+            unlockScreen.style.display = "block";
+            inputUnlockPass.value = "";
+            alert("Cofre bloqueado automaticamente por inatividade.");
+        }
+    }
+
+    // Activity monitoring
+    function setupActivityMonitoring() {
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => {
+            document.addEventListener(event, resetAutoLockTimer, true);
+        });
+    }
+
+    setupActivityMonitoring();
 
     // Navegação
     function hideAll() {
@@ -129,6 +162,7 @@ export function initVaultUI() {
 
         window.__vault_key = key;
         renderVaultEntries(decrypted.entries);
+        resetAutoLockTimer(); // Iniciar timer ao desbloquear
     });
 
     // Adicionar nova entrada
