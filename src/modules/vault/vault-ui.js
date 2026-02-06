@@ -11,6 +11,9 @@ let lastActivity = Date.now();
 let failedAttempts = 0;
 let lockoutUntil = 0;
 
+// Variável global para o campo de busca
+let searchInput = null;
+
 export function initVaultUI() {
     console.log("Vault UI initialized");
 
@@ -43,8 +46,8 @@ export function initVaultUI() {
     const btnExportVault = document.getElementById("vault-export-btn");
     const btnImportVault = document.getElementById("vault-import-btn");
 
-    // Campo de busca
-    const searchInput = document.getElementById("vault-search");
+    // Campo de busca - inicializar aqui
+    searchInput = document.getElementById("vault-search");
 
     // Auto-lock functions
     function resetAutoLockTimer() {
@@ -311,6 +314,11 @@ export function initVaultUI() {
 
     // Adicionar nova entrada
     btnAddEntry.addEventListener("click", async () => {
+        if (!window.__vault_key) {
+            alert("Cofre não está desbloqueado.");
+            return;
+        }
+
         const name = inputNewName.value.trim();
         const user = inputNewUser.value.trim();
         const pass = inputNewPass.value.trim();
@@ -321,16 +329,35 @@ export function initVaultUI() {
             return;
         }
 
-        await addEntry(window.__vault_key, name, user, pass, tags);
+        try {
+            console.log("Adding entry:", { title: name, user, hasPassword: !!pass });
 
-        const updated = await loadVault(window.__vault_key);
-        const searchTerm = searchInput?.value || '';
-        renderVaultEntries(updated.entries, searchTerm);
+            await addEntry(window.__vault_key, name, user, pass, tags);
 
-        inputNewName.value = "";
-        inputNewUser.value = "";
-        inputNewPass.value = "";
-        inputNewTags.value = "";
+            console.log("Entry saved successfully");
+
+            const vault = await loadVault(window.__vault_key);
+            
+            if (!vault || !vault.entries) {
+                throw new Error("Falha ao carregar cofre após salvar");
+            }
+
+            const searchTerm = searchInput ? searchInput.value : '';
+            renderVaultEntries(vault.entries, searchTerm);
+
+            // Limpar campos
+            inputNewName.value = "";
+            inputNewUser.value = "";
+            inputNewPass.value = "";
+            inputNewTags.value = "";
+
+            resetAutoLockTimer();
+            alert("Senha salva com sucesso!");
+
+        } catch (error) {
+            console.error("Error adding entry:", error);
+            alert("Erro ao adicionar senha: " + error.message);
+        }
     });
 
     // Exportar Cofre
@@ -600,20 +627,51 @@ async function copyToClipboard(text, buttonElement) {
 // Carregar e renderizar cofre
 async function loadAndRenderVault() {
     try {
-        const vault = await loadVault(window.__vault_key);
-        if (vault) {
-            const searchTerm = document.getElementById("vault-search")?.value || '';
-            renderVaultEntries(vault.entries, searchTerm);
+        if (!window.__vault_key) {
+            console.warn('Vault key not available');
+            renderVaultEntries([], '');
+            return;
         }
+
+        console.log("Loading vault...");
+        const vault = await loadVault(window.__vault_key);
+        
+        if (!vault) {
+            console.warn('No vault data found');
+            renderVaultEntries([], '');
+            return;
+        }
+
+        if (!vault.entries || !Array.isArray(vault.entries)) {
+            console.error('Invalid vault data structure');
+            renderVaultEntries([], '');
+            return;
+        }
+
+        console.log("Vault loaded successfully:", { entries: vault.entries.length });
+        
+        const searchTerm = searchInput ? searchInput.value : '';
+        renderVaultEntries(vault.entries, searchTerm);
     } catch (error) {
         console.error('Failed to load vault:', error);
+        renderVaultEntries([], '');
     }
 }
 
 // Abrir modal de edição
 async function openEditModal(entryId) {
     try {
+        if (!window.__vault_key) {
+            alert("Cofre não está desbloqueado.");
+            return;
+        }
+
         const vault = await loadVault(window.__vault_key);
+        if (!vault || !vault.entries || !Array.isArray(vault.entries)) {
+            alert("Erro ao carregar dados do cofre.");
+            return;
+        }
+
         const entry = vault.entries.find(e => e.id === entryId);
         
         if (!entry) {

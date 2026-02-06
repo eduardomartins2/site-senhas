@@ -103,15 +103,16 @@ export async function loadEncryptedVault() {
             };
             request.onsuccess = () => {
                 const result = request.result;
-                if (result) {
+                if (result && result.data) {
                     safeLog('Loaded encrypted vault from IndexedDB', { 
                         hasData: true,
-                        dataKeys: Object.keys(result.data || {})
+                        dataKeys: Object.keys(result.data)
                     });
+                    resolve(result.data);
                 } else {
                     safeLog('No vault data found in IndexedDB');
+                    resolve(null);
                 }
-                resolve(result ? result.data : null);
             };
         });
     } catch (error) {
@@ -150,7 +151,10 @@ export async function saveEncryptedVault(data) {
 // Decrypt vault with user key
 export async function loadVault(key) {
     const saved = await loadEncryptedVault();
-    if (!saved) return null;
+    if (!saved) {
+        // Retornar estrutura vazia em vez de null
+        return { entries: [] };
+    }
 
     const salt = b64ToArr(saved.salt);
     const iv = b64ToArr(saved.iv);
@@ -158,15 +162,29 @@ export async function loadVault(key) {
     const checksum = saved.checksum ? b64ToArr(saved.checksum) : null;
 
     const decrypted = await decryptData(key, { iv, ciphertext, checksum });
-    return decrypted;
+    return decrypted || { entries: [] };
 }
 
 // Save vault encrypted again
 export async function saveVault(key, vaultObj) {
     const encrypted = await encryptData(key, vaultObj);
 
+    // Obter salt existente de forma segura
+    const existingVault = await loadEncryptedVault();
+    let salt;
+    
+    if (existingVault && existingVault.salt) {
+        // Usar salt existente
+        salt = b64ToArr(existingVault.salt);
+        console.log('Using existing salt for vault encryption');
+    } else {
+        // Gerar novo salt apenas se não existir
+        salt = await generateSalt();
+        console.log('Generated new salt for vault encryption');
+    }
+    
     const newData = {
-        salt: arrToB64(vaultObj.salt ? vaultObj.salt : b64ToArr((await loadEncryptedVault()).salt)),
+        salt: arrToB64(salt),
         iv: arrToB64(encrypted.iv),
         ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext)),
         checksum: arrToB64(encrypted.checksum)
@@ -190,14 +208,18 @@ export async function addEntry(key, title, username, password, tags = []) {
         password,
         tags
     });
-    await saveEncryptedVault(await encryptVault(key, vault));
+    
+    // Salvar usando saveVault que mantém o salt original
+    await saveVault(key, vault);
 }
 
 // Delete entry
 export async function deleteEntry(key, id) {
     const vault = await loadVault(key);
     vault.entries = vault.entries.filter(e => e.id !== id);
-    await saveEncryptedVault(await encryptVault(key, vault));
+    
+    // Salvar usando saveVault que mantém o salt original
+    await saveVault(key, vault);
 }
 
 // Edit entry
@@ -209,7 +231,8 @@ export async function updateEntry(key, id, updates) {
 
     Object.assign(entry, updates);
 
-    await saveEncryptedVault(await encryptVault(key, vault));
+    // Salvar usando saveVault que mantém o salt original
+    await saveVault(key, vault);
     return true;
 }
 
