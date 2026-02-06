@@ -78,8 +78,9 @@ export async function loadVault(key) {
     const salt = b64ToArr(saved.salt);
     const iv = b64ToArr(saved.iv);
     const ciphertext = b64ToArr(saved.ciphertext);
+    const checksum = saved.checksum ? b64ToArr(saved.checksum) : null;
 
-    const decrypted = await decryptData(key, { iv, ciphertext });
+    const decrypted = await decryptData(key, { iv, ciphertext, checksum });
     return decrypted;
 }
 
@@ -90,7 +91,8 @@ export async function saveVault(key, vaultObj) {
     const newData = {
         salt: arrToB64(vaultObj.salt ? vaultObj.salt : b64ToArr((await loadEncryptedVault()).salt)),
         iv: arrToB64(encrypted.iv),
-        ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext))
+        ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext)),
+        checksum: arrToB64(encrypted.checksum)
     };
 
     await saveEncryptedVault(newData);
@@ -140,6 +142,7 @@ async function encryptVault(key, vault) {
     return {
         salt: arrToB64(new Uint8Array(16)), // reused salt (placeholder)
         iv: arrToB64(encrypted.iv),
-        ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext))
+        ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext)),
+        checksum: arrToB64(encrypted.checksum)
     };
 }

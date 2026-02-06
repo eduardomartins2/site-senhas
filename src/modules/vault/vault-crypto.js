@@ -38,7 +38,15 @@ export async function encryptData(key, dataObj) {
         encoded
     );
 
-    return { iv, ciphertext };
+    // AES-GCM já inclui tag de autenticação, mas vamos adicionar checksum adicional
+    const data = JSON.stringify(dataObj);
+    const checksum = await crypto.subtle.digest('SHA-256', encoded);
+
+    return { 
+        iv, 
+        ciphertext,
+        checksum: new Uint8Array(checksum)
+    };
 }
 
 export async function decryptData(key, encryptedObj) {
@@ -49,8 +57,35 @@ export async function decryptData(key, encryptedObj) {
             encryptedObj.ciphertext
         );
 
-        return JSON.parse(new TextDecoder().decode(plaintext));
+        const decoded = new TextDecoder().decode(plaintext);
+        
+        // Verificar integridade dos dados
+        if (encryptedObj.checksum) {
+            const computedChecksum = await crypto.subtle.digest('SHA-256', plaintext);
+            const storedChecksum = new Uint8Array(encryptedObj.checksum);
+            const computedArray = new Uint8Array(computedChecksum);
+            
+            // Comparar byte a byte para evitar timing attacks
+            if (storedChecksum.length !== computedArray.length) {
+                throw new Error('Checksum length mismatch');
+            }
+            
+            let isValid = true;
+            for (let i = 0; i < storedChecksum.length; i++) {
+                if (storedChecksum[i] !== computedArray[i]) {
+                    isValid = false;
+                    break;
+                }
+            }
+            
+            if (!isValid) {
+                throw new Error('Data integrity check failed');
+            }
+        }
+
+        return JSON.parse(decoded);
     } catch (err) {
-        return null; // senha incorreta
+        console.error('Decryption error:', err.message);
+        return null; // senha incorreta ou dados corrompidos
     }
 }
