@@ -490,7 +490,12 @@ function renderVaultEntries(entries, searchTerm = '') {
         div.innerHTML = `
             <h4>${highlightedTitle}</h4>
             <p><b>Usuário:</b> ${highlightedUsername}</p>
-            <p><b>Senha:</b> ${item.password}</p>
+            <p><b>Senha:</b> 
+                <span class="vault-password-container">
+                    <span class="vault-password-text" data-password="${item.password}">${item.password}</span>
+                    <button class="vault-copy-btn" data-password="${item.password}" title="Copiar senha">📋</button>
+                </span>
+            </p>
             <p><b>Tags:</b> ${highlightedTags}</p>
             <div class="vault-item-actions">
                 <button class="vault-edit-btn" data-id="${item.id}">Editar</button>
@@ -506,6 +511,14 @@ function renderVaultEntries(entries, searchTerm = '') {
         btn.addEventListener("click", async (e) => {
             const id = e.target.dataset.id;
             await openEditModal(id);
+        });
+    });
+
+    // Adicionar eventos de cópia de senha
+    list.querySelectorAll(".vault-copy-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const password = e.target.dataset.password;
+            await copyToClipboard(password, e.target);
         });
     });
 
@@ -531,6 +544,56 @@ function clearSearch() {
         searchInput.value = '';
         // Re-renderizar todas as entradas
         loadAndRenderVault();
+    }
+}
+
+// Copiar para clipboard com feedback
+async function copyToClipboard(text, buttonElement) {
+    try {
+        // Usar a API moderna de clipboard
+        await navigator.clipboard.writeText(text);
+        
+        // Feedback visual
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = '✓ Copiado!';
+        buttonElement.style.background = 'var(--accent)';
+        
+        setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.style.background = '';
+        }, 2000);
+        
+        resetAutoLockTimer();
+    } catch (error) {
+        // Fallback para browsers mais antigos
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            
+            // Feedback visual
+            const originalText = buttonElement.textContent;
+            buttonElement.textContent = '✓ Copiado!';
+            buttonElement.style.background = 'var(--accent)';
+            
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+                buttonElement.style.background = '';
+            }, 2000);
+        } catch (fallbackError) {
+            console.error('Failed to copy to clipboard:', fallbackError);
+            alert('Falha ao copiar senha. Copie manualmente.');
+        }
+        
+        document.body.removeChild(textArea);
+        resetAutoLockTimer();
     }
 }
 
