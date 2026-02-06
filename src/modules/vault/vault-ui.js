@@ -43,6 +43,9 @@ export function initVaultUI() {
     const btnExportVault = document.getElementById("vault-export-btn");
     const btnImportVault = document.getElementById("vault-import-btn");
 
+    // Campo de busca
+    const searchInput = document.getElementById("vault-search");
+
     // Auto-lock functions
     function resetAutoLockTimer() {
         lastActivity = Date.now();
@@ -152,6 +155,25 @@ export function initVaultUI() {
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
         events.forEach(event => {
             document.addEventListener(event, resetAutoLockTimer, true);
+        });
+    }
+
+    // Adicionar evento de busca
+    if (searchInput) {
+        let searchTimeout;
+        
+        searchInput.addEventListener("input", (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadAndRenderVault();
+            }, 300); // Debounce de 300ms
+        });
+        
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadAndRenderVault();
+            }
         });
     }
 
@@ -282,7 +304,8 @@ export function initVaultUI() {
         unlockedSection.style.display = "block";
 
         window.__vault_key = key;
-        renderVaultEntries(decrypted.entries);
+        const searchTerm = searchInput?.value || '';
+        renderVaultEntries(decrypted.entries, searchTerm);
         resetAutoLockTimer(); // Iniciar timer ao desbloquear
     });
 
@@ -301,7 +324,8 @@ export function initVaultUI() {
         await addEntry(window.__vault_key, name, user, pass, tags);
 
         const updated = await loadVault(window.__vault_key);
-        renderVaultEntries(updated.entries);
+        const searchTerm = searchInput?.value || '';
+        renderVaultEntries(updated.entries, searchTerm);
 
         inputNewName.value = "";
         inputNewUser.value = "";
@@ -421,19 +445,53 @@ function base64ToArray(b64) {
 }
 
 // Renderizar itens
-function renderVaultEntries(entries) {
+function renderVaultEntries(entries, searchTerm = '') {
     const list = document.getElementById("vault-entries");
     list.innerHTML = "";
 
-    entries.forEach(item => {
+    // Filtrar entradas baseado no termo de busca
+    let filteredEntries = entries;
+    if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase();
+        filteredEntries = entries.filter(entry => {
+            return entry.title.toLowerCase().includes(term) ||
+                   entry.username.toLowerCase().includes(term) ||
+                   entry.tags.some(tag => tag.toLowerCase().includes(term));
+        });
+    }
+
+    // Mostrar mensagem se não houver resultados
+    if (filteredEntries.length === 0 && searchTerm.trim()) {
+        list.innerHTML = `
+            <div class="vault-no-results">
+                <p>Nenhuma senha encontrada para "${searchTerm}"</p>
+                <button class="btn-secondary" onclick="clearSearch()">Limpar busca</button>
+            </div>
+        `;
+        return;
+    }
+
+    // Renderizar entradas filtradas
+    filteredEntries.forEach(item => {
         const div = document.createElement("div");
         div.className = "vault-item";
 
+        // Destacar termo de busca no texto
+        const highlightText = (text, term) => {
+            if (!term) return text;
+            const regex = new RegExp(`(${term})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        };
+
+        const highlightedTitle = highlightText(item.title, searchTerm);
+        const highlightedUsername = highlightText(item.username, searchTerm);
+        const highlightedTags = item.tags.map(tag => highlightText(tag, searchTerm)).join(", ");
+
         div.innerHTML = `
-            <h4>${item.title}</h4>
-            <p><b>Usuário:</b> ${item.username}</p>
+            <h4>${highlightedTitle}</h4>
+            <p><b>Usuário:</b> ${highlightedUsername}</p>
             <p><b>Senha:</b> ${item.password}</p>
-            <p><b>Tags:</b> ${item.tags.join(", ")}</p>
+            <p><b>Tags:</b> ${highlightedTags}</p>
             <div class="vault-item-actions">
                 <button class="vault-edit-btn" data-id="${item.id}">Editar</button>
                 <button class="vault-delete-btn" data-id="${item.id}">Excluir</button>
@@ -460,10 +518,33 @@ function renderVaultEntries(entries) {
                 await deleteEntry(window.__vault_key, id);
 
                 const updated = await loadVault(window.__vault_key);
-                renderVaultEntries(updated.entries);
+                renderVaultEntries(updated.entries, searchTerm);
             }
         });
     });
+}
+
+// Limpar busca
+function clearSearch() {
+    const searchInput = document.getElementById("vault-search");
+    if (searchInput) {
+        searchInput.value = '';
+        // Re-renderizar todas as entradas
+        loadAndRenderVault();
+    }
+}
+
+// Carregar e renderizar cofre
+async function loadAndRenderVault() {
+    try {
+        const vault = await loadVault(window.__vault_key);
+        if (vault) {
+            const searchTerm = document.getElementById("vault-search")?.value || '';
+            renderVaultEntries(vault.entries, searchTerm);
+        }
+    } catch (error) {
+        console.error('Failed to load vault:', error);
+    }
 }
 
 // Abrir modal de edição

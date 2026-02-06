@@ -189,3 +189,48 @@
 .vault-edit-actions .btn-secondary {
     flex: 1;
 }
+
+/* Search styles */
+.vault-search-container {
+    margin-bottom: 20px;
+}
+
+.vault-search {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.vault-search:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.vault-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.vault-no-results p {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+}
+
+.vault-no-results button {
+    margin-top: 12px;
+}
+
+/* Highlight search results */
+mark {
+    background: rgba(59, 210, 127, 0.3);
+    color: var(--text);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
