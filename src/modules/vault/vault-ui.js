@@ -1,5 +1,5 @@
 import { generateSalt, deriveKey, encryptData, decryptData } from "./vault-crypto.js";
-import { loadVault, addEntry, updateEntry, deleteEntry } from "./vault-storage.js";
+import { loadVault, addEntry, updateEntry, deleteEntry, exportVault } from "./vault-storage.js";
 
 const VAULT_KEY = "secure_vault";
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutos
@@ -38,6 +38,9 @@ export function initVaultUI() {
     const inputNewUser = document.getElementById("new-entry-username");
     const inputNewPass = document.getElementById("new-entry-password");
     const inputNewTags = document.getElementById("new-entry-tags");
+
+    // Botão de exportação
+    const btnExportVault = document.getElementById("vault-export-btn");
 
     // Auto-lock functions
     function resetAutoLockTimer() {
@@ -304,6 +307,45 @@ export function initVaultUI() {
         inputNewPass.value = "";
         inputNewTags.value = "";
     });
+
+    // Exportar Cofre
+    if (btnExportVault) {
+        btnExportVault.addEventListener("click", async () => {
+            if (!window.__vault_key) {
+                alert("Cofre não está desbloqueado.");
+                return;
+            }
+
+            const exportPassword = prompt("Digite uma senha para criptografar o arquivo de exportação:");
+            if (!exportPassword) {
+                return; // Usuário cancelou
+            }
+
+            if (exportPassword.length < 8) {
+                alert("A senha de exportação deve ter no mínimo 8 caracteres.");
+                return;
+            }
+
+            try {
+                const exportData = await exportVault(window.__vault_key, exportPassword);
+                
+                // Criar e baixar arquivo
+                const blob = new Blob([exportData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `password-vault-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert("Cofre exportado com sucesso! Guarde o arquivo e a senha de exportação em local seguro.");
+            } catch (error) {
+                alert("Erro ao exportar cofre: " + error.message);
+            }
+        });
+    }
 }
 
 // Helpers Base64

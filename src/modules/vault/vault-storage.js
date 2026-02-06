@@ -3,6 +3,11 @@
 
 import { encryptData, decryptData, deriveKey } from "./vault-crypto.js";
 
+// Importar funções de criptografia necessárias
+async function generateSalt() {
+    return crypto.getRandomValues(new Uint8Array(16));
+}
+
 const VAULT_KEY = "secure_vault";
 const DB_NAME = "PasswordVaultDB";
 const DB_VERSION = 1;
@@ -145,4 +150,50 @@ async function encryptVault(key, vault) {
         ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext)),
         checksum: arrToB64(encrypted.checksum)
     };
+}
+
+// Export vault encrypted with export password
+export async function exportVault(vaultKey, exportPassword) {
+    try {
+        // Load current vault data
+        const vault = await loadVault(vaultKey);
+        if (!vault) {
+            throw new Error('No vault data to export');
+        }
+
+        // Generate new salt for export encryption
+        const exportSalt = await generateSalt();
+        
+        // Derive key from export password
+        const exportKey = await deriveKey(exportPassword, exportSalt);
+        
+        // Create export package with metadata
+        const exportPackage = {
+            version: "1.0",
+            exportedAt: new Date().toISOString(),
+            vaultData: vault,
+            metadata: {
+                entries: vault.entries.length,
+                description: "Password Vault Export"
+            }
+        };
+
+        // Encrypt with export password
+        const encrypted = await encryptData(exportKey, exportPackage);
+        
+        // Create export file structure
+        const exportFile = {
+            salt: arrToB64(exportSalt),
+            iv: arrToB64(encrypted.iv),
+            ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext)),
+            checksum: arrToB64(encrypted.checksum),
+            version: "1.0",
+            type: "password-vault-export"
+        };
+
+        return JSON.stringify(exportFile, null, 2);
+    } catch (error) {
+        console.error('Export error:', error);
+        throw new Error('Failed to export vault: ' + error.message);
+    }
 }
