@@ -3,9 +3,13 @@ import { loadVault, addEntry, updateEntry, deleteEntry } from "./vault-storage.j
 
 const VAULT_KEY = "secure_vault";
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+const MAX_ATTEMPTS = 5; // Máximo de tentativas
+const ATTEMPT_TIMEOUT = 15 * 60 * 1000; // 15 minutos de bloqueio após falhas
 
 let autoLockTimer = null;
 let lastActivity = Date.now();
+let failedAttempts = 0;
+let lockoutUntil = 0;
 
 export function initVaultUI() {
     console.log("Vault UI initialized");
@@ -63,6 +67,35 @@ export function initVaultUI() {
                 window.__vault_key = null;
             }
         }
+    }
+
+    function isLockedOut() {
+        return Date.now() < lockoutUntil;
+    }
+
+    function getRemainingLockoutTime() {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000 / 60);
+        return remaining > 0 ? remaining : 0;
+    }
+
+    function handleFailedAttempt() {
+        failedAttempts++;
+        
+        if (failedAttempts >= MAX_ATTEMPTS) {
+            lockoutUntil = Date.now() + ATTEMPT_TIMEOUT;
+            const minutes = ATTEMPT_TIMEOUT / 1000 / 60;
+            alert(`Muitas tentativas falhas. Cofre bloqueado por ${minutes} minutos.`);
+            return true; // indica que foi bloqueado
+        }
+        
+        const remaining = MAX_ATTEMPTS - failedAttempts;
+        alert(`Senha incorreta. ${remaining} tentativa(s) restante(s).`);
+        return false;
+    }
+
+    function resetFailedAttempts() {
+        failedAttempts = 0;
+        lockoutUntil = 0;
     }
 
     function lockVault() {
@@ -158,6 +191,13 @@ export function initVaultUI() {
 
     // Desbloquear Cofre
     btnUnlockVault.addEventListener("click", async () => {
+        // Verificar se está bloqueado por tentativas falhas
+        if (isLockedOut()) {
+            const remainingMinutes = getRemainingLockoutTime();
+            alert(`Cofre bloqueado. Tente novamente em ${remainingMinutes} minuto(s).`);
+            return;
+        }
+
         clearVaultKey(); // Limpar qualquer chave existente antes de desbloquear
         
         const pass = inputUnlockPass.value.trim();
@@ -180,10 +220,15 @@ export function initVaultUI() {
 
         if (!decrypted) {
             clearVaultKey(); // Limpar chave incorreta
-            alert("Palavra-passe incorreta.");
+            const wasLockedOut = handleFailedAttempt();
+            
+            if (wasLockedOut) {
+                inputUnlockPass.value = "";
+            }
             return;
         }
 
+        resetFailedAttempts(); // Resetar contador em sucesso
         alert("Cofre desbloqueado!");
 
         hideAll();
