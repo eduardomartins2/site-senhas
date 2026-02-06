@@ -9,6 +9,9 @@
     --accent: #4da3ff;
     --danger: #ff6b6b;
     --warning: #f5a623;
+    --warning-bg: rgba(245, 166, 35, 0.1);
+    --warning-border: rgba(245, 166, 35, 0.3);
     --border: #26313c;
     --shadow: 0 4px 18px rgba(0,0,0,0.35);
+    --input-bg: #0d1117;
 }

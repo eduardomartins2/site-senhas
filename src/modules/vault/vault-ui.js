@@ -434,20 +434,119 @@ function renderVaultEntries(entries) {
             <p><b>Usuário:</b> ${item.username}</p>
             <p><b>Senha:</b> ${item.password}</p>
             <p><b>Tags:</b> ${item.tags.join(", ")}</p>
-            <button class="vault-delete-btn" data-id="${item.id}">Excluir</button>
+            <div class="vault-item-actions">
+                <button class="vault-edit-btn" data-id="${item.id}">Editar</button>
+                <button class="vault-delete-btn" data-id="${item.id}">Excluir</button>
+            </div>
         `;
 
         list.appendChild(div);
     });
 
+    // Adicionar eventos de edição
+    list.querySelectorAll(".vault-edit-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const id = e.target.dataset.id;
+            await openEditModal(id);
+        });
+    });
+
+    // Adicionar eventos de exclusão (existente)
     list.querySelectorAll(".vault-delete-btn").forEach(btn => {
         btn.addEventListener("click", async (e) => {
             const id = e.target.dataset.id;
 
-            await deleteEntry(window.__vault_key, id);
+            if (confirm("Tem certeza que deseja excluir esta senha?")) {
+                await deleteEntry(window.__vault_key, id);
 
-            const updated = await loadVault(window.__vault_key);
-            renderVaultEntries(updated.entries);
+                const updated = await loadVault(window.__vault_key);
+                renderVaultEntries(updated.entries);
+            }
         });
     });
+}
+
+// Abrir modal de edição
+async function openEditModal(entryId) {
+    try {
+        const vault = await loadVault(window.__vault_key);
+        const entry = vault.entries.find(e => e.id === entryId);
+        
+        if (!entry) {
+            alert("Entrada não encontrada.");
+            return;
+        }
+
+        // Criar modal de edição
+        const modal = document.createElement("div");
+        modal.className = "vault-edit-modal";
+        modal.innerHTML = `
+            <div class="vault-edit-content">
+                <h3>Editar Senha</h3>
+                <form id="edit-form">
+                    <label for="edit-title">Título:</label>
+                    <input type="text" id="edit-title" value="${entry.title}" required>
+                    
+                    <label for="edit-username">Usuário:</label>
+                    <input type="text" id="edit-username" value="${entry.username}" required>
+                    
+                    <label for="edit-password">Senha:</label>
+                    <input type="password" id="edit-password" value="${entry.password}" required>
+                    
+                    <label for="edit-tags">Tags (separadas por vírgula):</label>
+                    <input type="text" id="edit-tags" value="${entry.tags.join(', ')}">
+                    
+                    <div class="vault-edit-actions">
+                        <button type="button" class="btn-secondary" id="cancel-edit">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Adicionar eventos
+        const form = document.getElementById("edit-form");
+        const cancelBtn = document.getElementById("cancel-edit");
+
+        cancelBtn.addEventListener("click", () => {
+            document.body.removeChild(modal);
+        });
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const updatedEntry = {
+                title: document.getElementById("edit-title").value.trim(),
+                username: document.getElementById("edit-username").value.trim(),
+                password: document.getElementById("edit-password").value.trim(),
+                tags: document.getElementById("edit-tags").value.split(",").map(t => t.trim()).filter(Boolean)
+            };
+
+            if (!updatedEntry.title || !updatedEntry.username || !updatedEntry.password) {
+                alert("Preencha título, usuário e senha.");
+                return;
+            }
+
+            try {
+                await updateEntry(window.__vault_key, entryId, updatedEntry);
+                
+                const updated = await loadVault(window.__vault_key);
+                renderVaultEntries(updated.entries);
+                
+                document.body.removeChild(modal);
+                alert("Senha atualizada com sucesso!");
+                resetAutoLockTimer();
+            } catch (error) {
+                alert("Erro ao atualizar senha: " + error.message);
+            }
+        });
+
+        // Focar no primeiro campo
+        document.getElementById("edit-title").focus();
+
+    } catch (error) {
+        alert("Erro ao abrir edição: " + error.message);
+    }
 }

@@ -90,3 +90,102 @@
     flex-direction: column;
     gap: 12px;
 }
+
+/* Vault item actions */
+.vault-item-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.vault-edit-btn,
+.vault-delete-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.vault-edit-btn {
+    background: var(--primary);
+    color: #fff;
+}
+
+.vault-edit-btn:hover {
+    background: var(--primary-dark);
+}
+
+.vault-delete-btn {
+    background: var(--danger);
+    color: #fff;
+}
+
+.vault-delete-btn:hover {
+    opacity: 0.85;
+}
+
+/* Edit modal */
+.vault-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.vault-edit-content {
+    background: var(--surface);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    width: 90%;
+    max-width: 400px;
+}
+
+.vault-edit-content h3 {
+    margin: 0 0 20px 0;
+    color: var(--primary);
+    font-size: 1.3rem;
+}
+
+.vault-edit-content label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.vault-edit-content input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.vault-edit-content input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.vault-edit-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.vault-edit-actions .btn-primary,
+.vault-edit-actions .btn-secondary {
+    flex: 1;
+}
