@@ -44,9 +44,30 @@ export function initVaultUI() {
         autoLockTimer = setTimeout(lockVault, AUTO_LOCK_TIMEOUT);
     }
 
+    function clearVaultKey() {
+        if (window.__vault_key) {
+            try {
+                // Limpar chave criptográfica da memória de forma segura
+                if (window.__vault_key && typeof window.__vault_key === 'object') {
+                    // Para CryptoKey objects, não podemos modificar diretamente
+                    // Mas podemos remover a referência para garbage collection
+                }
+                window.__vault_key = null;
+                
+                // Forçar garbage collection se disponível (apenas em desenvolvimento)
+                if (window.gc && typeof window.gc === 'function') {
+                    window.gc();
+                }
+            } catch (error) {
+                console.warn('Error clearing vault key:', error);
+                window.__vault_key = null;
+            }
+        }
+    }
+
     function lockVault() {
         if (window.__vault_key) {
-            window.__vault_key = null;
+            clearVaultKey();
             hideAll();
             unlockScreen.style.display = "block";
             inputUnlockPass.value = "";
@@ -83,17 +104,21 @@ export function initVaultUI() {
     });
 
     btnBackFromCreate.addEventListener("click", () => {
+        clearVaultKey(); // Limpar chave ao voltar
         hideAll();
         startScreen.style.display = "block";
     });
 
     btnBackFromUnlock.addEventListener("click", () => {
+        clearVaultKey(); // Limpar chave ao voltar
         hideAll();
         startScreen.style.display = "block";
     });
 
     // Criar Cofre
     btnCreateVault.addEventListener("click", async () => {
+        clearVaultKey(); // Limpar qualquer chave existente antes de criar novo cofre
+        
         const pass = inputCreatePass.value.trim();
         const pass2 = inputCreateConfirm.value.trim();
 
@@ -126,12 +151,15 @@ export function initVaultUI() {
 
         alert("Cofre criado com sucesso!");
 
+        clearVaultKey(); // Limpar chave temporária após criação
         hideAll();
         unlockScreen.style.display = "block";
     });
 
     // Desbloquear Cofre
     btnUnlockVault.addEventListener("click", async () => {
+        clearVaultKey(); // Limpar qualquer chave existente antes de desbloquear
+        
         const pass = inputUnlockPass.value.trim();
 
         const saved = localStorage.getItem(VAULT_KEY);
@@ -151,6 +179,7 @@ export function initVaultUI() {
         const decrypted = await decryptData(key, { iv, ciphertext });
 
         if (!decrypted) {
+            clearVaultKey(); // Limpar chave incorreta
             alert("Palavra-passe incorreta.");
             return;
         }
