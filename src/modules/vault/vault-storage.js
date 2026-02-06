@@ -4,6 +4,26 @@
 import { encryptData, decryptData, deriveKey } from "./vault-crypto.js";
 
 const VAULT_KEY = "secure_vault";
+const DB_NAME = "PasswordVaultDB";
+const DB_VERSION = 1;
+const STORE_NAME = "vault";
+
+// IndexedDB initialization
+async function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: "id" });
+            }
+        };
+    });
+}
 
 // Convert ArrayBuffer <-> Base64 helpers
 function arrToB64(arr) {
@@ -14,21 +34,45 @@ function b64ToArr(b64) {
     return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-// Load vault from localStorage (encrypted)
-export function loadEncryptedVault() {
-    const raw = localStorage.getItem(VAULT_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
+// Load vault from IndexedDB (encrypted)
+export async function loadEncryptedVault() {
+    try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(VAULT_KEY);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+        });
+    } catch (error) {
+        console.error("Failed to load from IndexedDB:", error);
+        return null;
+    }
 }
 
-// Save encrypted vault back to localStorage
-export function saveEncryptedVault(data) {
-    localStorage.setItem(VAULT_KEY, JSON.stringify(data));
+// Save encrypted vault back to IndexedDB
+export async function saveEncryptedVault(data) {
+    try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put({ id: VAULT_KEY, data });
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve();
+        });
+    } catch (error) {
+        console.error("Failed to save to IndexedDB:", error);
+        throw error;
+    }
 }
 
 // Decrypt vault with user key
 export async function loadVault(key) {
-    const saved = loadEncryptedVault();
+    const saved = await loadEncryptedVault();
     if (!saved) return null;
 
     const salt = b64ToArr(saved.salt);
@@ -44,12 +88,12 @@ export async function saveVault(key, vaultObj) {
     const encrypted = await encryptData(key, vaultObj);
 
     const newData = {
-        salt: arrToB64(vaultObj.salt ? vaultObj.salt : b64ToArr(JSON.parse(localStorage.getItem(VAULT_KEY)).salt)),
+        salt: arrToB64(vaultObj.salt ? vaultObj.salt : b64ToArr((await loadEncryptedVault()).salt)),
         iv: arrToB64(encrypted.iv),
         ciphertext: arrToB64(new Uint8Array(encrypted.ciphertext))
     };
 
-    saveEncryptedVault(newData);
+    await saveEncryptedVault(newData);
 }
 
 // Generate ID for entries
