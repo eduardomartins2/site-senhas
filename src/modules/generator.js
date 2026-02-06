@@ -22,8 +22,11 @@ export function initGenerator() {
             chars += "!@#$%^&*()_+-=[]{}|;:',.<>?/";
 
         let password = "";
+        const randomValues = new Uint32Array(length);
+        crypto.getRandomValues(randomValues);
+        
         for (let i = 0; i < length; i++) {
-            const rand = Math.floor(Math.random() * chars.length);
+            const rand = randomValues[i] % chars.length;
             password += chars[rand];
         }
 
