@@ -60,17 +60,30 @@ function buildCharPool(options) {
     return pool;
 }
 
-// Generate password using secure random
+// Generate password using secure random - CORRIGIR BIAS CRIPTOGRÁFICO
 function generatePasswordFromPool(length, charPool) {
-    const randomBytes = generateSecureRandom(length);
     let password = '';
     
     for (let i = 0; i < length; i++) {
-        const randomIndex = randomBytes[i] % charPool.length;
+        const randomIndex = getSecureRandomIndex(charPool.length);
         password += charPool[randomIndex];
     }
     
     return password;
+}
+
+// Função segura para índice aleatório sem bias
+function getSecureRandomIndex(max) {
+    const array = new Uint32Array(1);
+    const limit = Math.floor(0xFFFFFFFF / max) * max;
+
+    let random;
+    do {
+        window.crypto.getRandomValues(array);
+        random = array[0];
+    } while (random >= limit);
+
+    return random % max;
 }
 
 // Ensure password contains at least one character from each required set
@@ -106,7 +119,7 @@ function ensureCharacterRequirements(password, options) {
 
 // Main password generation function
 export function generatePassword(options = {}) {
-    // Default options
+    // Default options - SEM STRENGTH PADRÃO
     const defaults = {
         length: 16,
         includeLowercase: true,
@@ -114,16 +127,24 @@ export function generatePassword(options = {}) {
         includeNumbers: true,
         includeSymbols: true,
         excludeSimilar: false,
-        excludeAmbiguous: false,
-        strength: 'strong'
+        excludeAmbiguous: false
     };
     
-    const config = { ...defaults, ...options };
+    let config = { ...defaults };
     
-    // Apply strength preset if specified
-    if (STRENGTH_PRESETS[config.strength]) {
-        Object.assign(config, STRENGTH_PRESETS[config.strength]);
+    // Apply preset APENAS se explicitamente fornecido
+    if (options.strength && STRENGTH_PRESETS[options.strength]) {
+        config = {
+            ...config,
+            ...STRENGTH_PRESETS[options.strength]
+        };
     }
+    
+    // Aplicar overrides manuais POR ÚLTIMO (checkboxes têm prioridade máxima)
+    config = {
+        ...config,
+        ...options
+    };
     
     // Validate length
     if (config.length < 4) {
@@ -373,28 +394,32 @@ export function initGenerator() {
         btn.addEventListener("click", () => {
             const strength = btn.dataset.strength;
             
-            // Update UI based on preset
+            // Update UI based on preset - RESTAURAR LÓGICA NORMAL
             switch(strength) {
                 case 'weak':
                     lengthInput.value = 8;
+                    lowercase.checked = true;
                     uppercase.checked = false;
                     numbers.checked = false;
                     symbols.checked = false;
                     break;
                 case 'medium':
                     lengthInput.value = 12;
+                    lowercase.checked = true;
                     uppercase.checked = true;
                     numbers.checked = true;
                     symbols.checked = false;
                     break;
                 case 'strong':
                     lengthInput.value = 16;
+                    lowercase.checked = true;
                     uppercase.checked = true;
                     numbers.checked = true;
                     symbols.checked = true;
                     break;
                 case 'very_strong':
                     lengthInput.value = 24;
+                    lowercase.checked = true;
                     uppercase.checked = true;
                     numbers.checked = true;
                     symbols.checked = true;
@@ -452,15 +477,16 @@ export function initGenerator() {
         try {
             let results = [];
             
-            // Build options object
+            // Build options object - LER CHECKBOXES NORMALMENTE (SEM PRESET)
             const options = {
-                length: parseInt(lengthInput.value),
+                length: parseInt(lengthInput.value, 10),
                 includeLowercase: lowercase.checked,
                 includeUppercase: uppercase.checked,
                 includeNumbers: numbers.checked,
                 includeSymbols: symbols.checked,
                 excludeSimilar: excludeSimilar.checked,
                 excludeAmbiguous: excludeAmbiguous.checked
+                // REMOVIDO: strength para não sobrescrever checkboxes
             };
 
             // Generate based on mode
