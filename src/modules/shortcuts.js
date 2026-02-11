@@ -15,7 +15,17 @@ export class ShortcutManager {
     init() {
         this.setupGlobalShortcuts();
         this.bindEvents();
+        this.setupHelpButton();
         console.log('Keyboard shortcuts initialized');
+    }
+    
+    setupHelpButton() {
+        const helpBtn = document.getElementById('shortcuts-help-btn');
+        if (helpBtn) {
+            helpBtn.addEventListener('click', () => {
+                this.showHelp();
+            });
+        }
     }
     
     setupGlobalShortcuts() {

@@ -44,6 +44,53 @@
     outline-offset: 2px;
 }
 
+/* Keyboard Shortcuts Help Button */
+.shortcuts-help-btn {
+    position: fixed;
+    top: 20px;
+    right: 170px;
+    z-index: 1000;
+    min-width: 100px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+}
+
+.shortcuts-help-btn .help-icon {
+    font-size: 18px;
+}
+
+.shortcuts-help-btn .help-text {
+    white-space: nowrap;
+}
+
+.shortcuts-help-btn:hover {
+    background: var(--bg-soft);
+    color: var(--text);
+    transform: scale(1.02);
+}
+
+.shortcuts-help-btn:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.shortcuts-help-btn:active {
+    transform: scale(0.98);
+}
+
 /* Theme transitions */
 * {
     transition: background-color 0.3s ease, 
@@ -101,6 +148,10 @@ body {
         height: 32px;
         font-size: 14px;
     }
+    
+    .shortcuts-help-btn {
+        display: none;
+    }
 }
 
 /* High contrast mode support */
@@ -110,6 +161,15 @@ body {
     }
     
     .theme-toggle-btn:focus {
+        outline-width: 3px;
+    }
+    
+    .shortcuts-help-btn {
+        border-width: 2px;
+        border-radius: 22px;
+    }
+    
+    .shortcuts-help-btn:focus {
         outline-width: 3px;
     }
 }
