@@ -1,5 +1,5 @@
 // main.js
-// Initialize UI collapse + generator + clipboard + vault view loading + theme + shortcuts + security
+// Initialize UI collapse + generator + clipboard + vault view loading + theme + shortcuts + security + vault
 
 import { initGenerator } from "./src/modules/generator.js";
 import { initCopyButton } from "./src/modules/clipboard.js";
@@ -7,6 +7,7 @@ import { initVaultUI } from "./src/modules/vault/vault-ui.js";
 import { initTheme } from "./src/modules/theme.js";
 import { initShortcuts } from "./src/modules/shortcuts.js";
 import { initSecurityAdvanced } from "./src/modules/security-advanced.js";
+import { initVaultAdvanced } from "./src/modules/vault-advanced.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Main loaded");
@@ -17,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initGenerator();
     initCopyButton();
     initSecurityAdvanced();
+    initVaultAdvanced();
 
     // Load vault HTML view before attaching events
     fetch("./src/views/vault.html")
