@@ -311,27 +311,238 @@ export function generatePassphrase(options = {}) {
 
 // Password generator logic and UI events
 export function initGenerator() {
+    // Get all DOM elements
     const lengthInput = document.getElementById("length");
+    const lowercase = document.getElementById("lowercase");
     const uppercase = document.getElementById("uppercase");
     const numbers = document.getElementById("numbers");
     const symbols = document.getElementById("symbols");
+    const excludeSimilar = document.getElementById("exclude-similar");
+    const excludeAmbiguous = document.getElementById("exclude-ambiguous");
     const output = document.getElementById("password");
     const generateBtn = document.getElementById("generate-btn");
+    const copyBtn = document.getElementById("copy-password");
+
+    // Mode elements
+    const modeButtons = document.querySelectorAll(".mode-btn");
+    const passphraseOptions = document.getElementById("passphrase-options");
+    const multipleOptions = document.getElementById("multiple-options");
+    const wordCount = document.getElementById("word-count");
+    const separator = document.getElementById("separator");
+    const capitalizeWords = document.getElementById("capitalize-words");
+    const includeNumbers = document.getElementById("include-numbers");
+    const generateCount = document.getElementById("generate-count");
+
+    // Security analysis elements
+    const securityAnalysis = document.getElementById("security-analysis");
+    const strengthFill = document.getElementById("strength-fill");
+    const strengthText = document.getElementById("strength-text");
+    const entropyValue = document.getElementById("entropy-value");
+    const crackTime = document.getElementById("crack-time");
+    const feedbackList = document.getElementById("feedback-list");
+
+    // Preset buttons
+    const presetButtons = document.querySelectorAll(".preset-btn");
+
+    // Current generation mode
+    let currentMode = 'password';
 
     if (!generateBtn) return;
 
-    generateBtn.addEventListener("click", () => {
-        const length = parseInt(lengthInput.value);
-
-        const options = {
-            length,
-            includeUppercase: uppercase.checked,
-            includeNumbers: numbers.checked,
-            includeSymbols: symbols.checked
-        };
-
-        const result = generatePassword(options);
-
-        output.value = result.password;
+    // Mode switching
+    modeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            // Remove active class from all buttons
+            modeButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            
+            currentMode = btn.dataset.mode;
+            
+            // Show/hide appropriate options
+            passphraseOptions.style.display = currentMode === "passphrase" ? "flex" : "none";
+            multipleOptions.style.display = currentMode === "multiple" ? "flex" : "none";
+            
+            // Update button text
+            generateBtn.textContent = currentMode === "passphrase" ? "Gerar Passphrase" : 
+                                     currentMode === "multiple" ? "Gerar Múltiplas" : "Gerar Senha";
+        });
     });
+
+    // Preset buttons
+    presetButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const strength = btn.dataset.strength;
+            
+            // Update UI based on preset
+            switch(strength) {
+                case 'weak':
+                    lengthInput.value = 8;
+                    uppercase.checked = false;
+                    numbers.checked = false;
+                    symbols.checked = false;
+                    break;
+                case 'medium':
+                    lengthInput.value = 12;
+                    uppercase.checked = true;
+                    numbers.checked = true;
+                    symbols.checked = false;
+                    break;
+                case 'strong':
+                    lengthInput.value = 16;
+                    uppercase.checked = true;
+                    numbers.checked = true;
+                    symbols.checked = true;
+                    break;
+                case 'very_strong':
+                    lengthInput.value = 24;
+                    uppercase.checked = true;
+                    numbers.checked = true;
+                    symbols.checked = true;
+                    break;
+            }
+        });
+    });
+
+    // Copy button functionality
+    if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+            if (!output.value) return;
+            
+            try {
+                await navigator.clipboard.writeText(output.value);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copiado!';
+                copyBtn.style.background = 'var(--accent)';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '';
+                }, 2000);
+            } catch (error) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = output.value;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✓ Copiado!';
+                    copyBtn.style.background = 'var(--accent)';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '';
+                    }, 2000);
+                } catch (fallbackError) {
+                    console.error('Failed to copy:', fallbackError);
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        });
+    }
+
+    // Main generate button
+    generateBtn.addEventListener("click", () => {
+        try {
+            let results = [];
+            
+            // Build options object
+            const options = {
+                length: parseInt(lengthInput.value),
+                includeLowercase: lowercase.checked,
+                includeUppercase: uppercase.checked,
+                includeNumbers: numbers.checked,
+                includeSymbols: symbols.checked,
+                excludeSimilar: excludeSimilar.checked,
+                excludeAmbiguous: excludeAmbiguous.checked
+            };
+
+            // Generate based on mode
+            switch(currentMode) {
+                case 'password':
+                    const result = generatePassword(options);
+                    results = [result];
+                    output.value = result.password;
+                    updateSecurityAnalysis(result);
+                    break;
+                    
+                case 'passphrase':
+                    const passphraseOptions = {
+                        wordCount: parseInt(wordCount.value),
+                        separator: separator.value,
+                        capitalize: capitalizeWords.checked,
+                        includeNumbers: includeNumbers.checked
+                    };
+                    const passphraseResult = generatePassphrase(passphraseOptions);
+                    results = [passphraseResult];
+                    output.value = passphraseResult.passphrase;
+                    updateSecurityAnalysis(passphraseResult);
+                    break;
+                    
+                case 'multiple':
+                    const count = parseInt(generateCount.value);
+                    results = generateMultiplePasswords(count, options);
+                    
+                    // Display multiple passwords
+                    output.value = results.map((r, i) => `${i + 1}. ${r.password}`).join('\n');
+                    
+                    // Show analysis for first password
+                    if (results.length > 0) {
+                        updateSecurityAnalysis(results[0]);
+                    }
+                    break;
+            }
+            
+            console.log(`Generated ${currentMode}:`, results);
+            
+        } catch (error) {
+            console.error('Generation error:', error);
+            alert('Erro ao gerar senha: ' + error.message);
+        }
+    });
+
+    // Update security analysis display
+    function updateSecurityAnalysis(result) {
+        if (!result || !result.strength) return;
+        
+        const strength = result.strength;
+        const entropy = result.entropy || 0;
+        
+        // Update strength bar
+        strengthFill.className = `strength-fill ${strength.level}`;
+        strengthText.textContent = strength.level.replace('_', ' ').toUpperCase();
+        
+        // Update entropy
+        entropyValue.textContent = entropy.toFixed(1);
+        
+        // Update crack time
+        crackTime.textContent = strength.crackTime || 'Unknown';
+        
+        // Update feedback list
+        feedbackList.innerHTML = '';
+        if (strength.feedback && strength.feedback.length > 0) {
+            const ul = document.createElement('ul');
+            strength.feedback.forEach(feedback => {
+                const li = document.createElement('li');
+                li.textContent = feedback;
+                ul.appendChild(li);
+            });
+            feedbackList.appendChild(ul);
+        }
+        
+        // Show security analysis
+        securityAnalysis.style.display = 'block';
+    }
+
+    // Initialize with password mode
+    const passwordModeBtn = document.querySelector('[data-mode="password"]');
+    if (passwordModeBtn) {
+        passwordModeBtn.click();
+    }
 }
