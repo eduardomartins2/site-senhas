@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/generator.css" />
     <link rel="stylesheet" href="css/vault.css" />
     <link rel="stylesheet" href="css/security.css" />
+    <link rel="stylesheet" href="css/security-advanced.css" />
     <link rel="stylesheet" href="css/theme.css" />
 </head>
 
@@ -151,12 +152,181 @@
         </section>
 
         <!-- Security Information (toggle) -->
-        <section class="section-card collapsible">
-            <button class="collapse-btn" id="toggle-security">
-                Dicas de Segurança
-            </button>
-            <div class="collapse-content" id="security-content">
-                <p>(As dicas serão carregadas aqui em breve...)</p>
+        <section class="section-card security-section">
+            <header class="section-header">
+                <h2>🛡️ Centro de Segurança</h2>
+                <p class="section-subtitle">Dicas práticas e análise de vulnerabilidades</p>
+            </header>
+            
+            <div class="security-content">
+                <!-- Security Score Overview -->
+                <div class="security-overview">
+                    <div class="security-metric">
+                        <div class="metric-icon">🔐</div>
+                        <div class="metric-info">
+                            <h3>Força da Senha</h3>
+                            <div class="metric-value" id="security-score">-</div>
+                            <div class="metric-description">Avaliação criptográfica</div>
+                        </div>
+                    </div>
+                    
+                    <div class="security-metric">
+                        <div class="metric-icon">⏱️</div>
+                        <div class="metric-info">
+                            <h3>Tempo de Quebra</h3>
+                            <div class="metric-value" id="security-crack-time">-</div>
+                            <div class="metric-description">Força bruta estimada</div>
+                        </div>
+                    </div>
+                    
+                    <div class="security-metric">
+                        <div class="metric-icon">🎲</div>
+                        <div class="metric-info">
+                            <h3>Entropia</h3>
+                            <div class="metric-value" id="security-entropy">-</div>
+                            <div class="metric-description">Bits de aleatoriedade</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tips -->
+                <div class="security-tips">
+                    <h3>📚 Dicas de Segurança Essenciais</h3>
+                    
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">🔑</span>
+                            <h4>Criação de Senhas</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Use senhas únicas</strong> para cada conta - nunca reutilize!</li>
+                            <li><strong>Mínimo 12 caracteres</strong> com letras, números e símbolos</li>
+                            <li><strong>Evite informações pessoais</strong> como datas, nomes ou CPF</li>
+                            <li><strong>Não use padrões</strong> como "Senha123" ou "123456"</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">🛡️</span>
+                            <h4>Proteção de Contas</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Ative 2FA</strong> sempre que disponível</li>
+                            <li><strong>Use gerenciadores</strong> em vez de memorizar senhas</li>
+                            <li><strong>Cuidado com phishing</strong> - verifique URLs antes</li>
+                            <li><strong>Atualize softwares</strong> regularmente</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">⚠️</span>
+                            <h4>Riscos Comuns</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Senhas fracas</strong> podem ser quebradas em segundos</li>
+                            <li><strong>Wi-Fi público</strong> expõe seus dados a hackers</li>
+                            <li><strong>Phishing</strong> rouba 90% das senhas comprometidas</li>
+                            <li><strong>Reutilização</strong> cria efeito dominó se uma for vazada</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">🔍</span>
+                            <h4>Vazamentos de Dados</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Verifique vazamentos</strong> em sites como "Have I Been Pwned"</li>
+                            <li><strong>Mude senhas</strong> imediatamente após vazamentos</li>
+                            <li><strong>Monitore contas</strong> por atividades suspeitas</li>
+                            <li><strong>Use alertas</strong> de login em serviços importantes</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">📱</span>
+                            <h4>Segurança Móvel</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Use biometria</strong> quando disponível</li>
+                            <li><strong>Instale apps</strong> apenas de fontes oficiais</li>
+                            <li><strong>Evite Wi-Fi público</strong> para operações sensíveis</li>
+                            <li><strong>Crie senhas fortes</strong> mesmo no celular</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-category">
+                        <div class="tip-header">
+                            <span class="tip-icon">🏢</span>
+                            <h4>Segurança Empresarial</h4>
+                        </div>
+                        <ul class="tip-list">
+                            <li><strong>Políticas de senha</strong> devem ser exigidas</li>
+                            <li><strong>Treinamento regular</strong> sobre segurança digital</li>
+                            <li><strong>Controle de acesso</strong> baseado em necessidade</li>
+                            <li><strong>Auditoria periódica</strong> de permissões</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Interactive Security Quiz -->
+                <div class="security-quiz">
+                    <h3>🧪 Teste Seus Conhecimentos</h3>
+                    <div class="quiz-container" id="security-quiz">
+                        <div class="quiz-question">
+                            <p>Qual é a prática mais segura para criar senhas?</p>
+                            <div class="quiz-options">
+                                <label class="quiz-option">
+                                    <input type="radio" name="q1" value="wrong">
+                                    <span>Usar o nome do pet + ano de nascimento</span>
+                                </label>
+                                <label class="quiz-option">
+                                    <input type="radio" name="q1" value="wrong">
+                                    <span>Usar a mesma senha em todos os sites</span>
+                                </label>
+                                <label class="quiz-option">
+                                    <input type="radio" name="q1" value="correct">
+                                    <span>Usar senhas únicas e aleatórias para cada conta</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="checkQuizAnswer()">Verificar Resposta</button>
+                        <div class="quiz-feedback" id="quiz-feedback"></div>
+                    </div>
+                </div>
+
+                <!-- Security Resources -->
+                <div class="security-resources">
+                    <h3>🔗 Recursos Úteis</h3>
+                    <div class="resource-links">
+                        <a href="https://haveibeenpwned.com" target="_blank" class="resource-link">
+                            <span class="resource-icon">🔍</span>
+                            <div class="resource-info">
+                                <h4>Have I Been Pwned</h4>
+                                <p>Verifique se seu email foi vazado</p>
+                            </div>
+                        </a>
+                        
+                        <a href="https://www.2fa.directory" target="_blank" class="resource-link">
+                            <span class="resource-icon">🔐</span>
+                            <div class="resource-info">
+                                <h4>2FA Directory</h4>
+                                <p>Sites que suportam autenticação de dois fatores</p>
+                            </div>
+                        </a>
+                        
+                        <a href="https://www.password-depot.com/knowledgebase/password-security-tips" target="_blank" class="resource-link">
+                            <span class="resource-icon">📚</span>
+                            <div class="resource-info">
+                                <h4>Guia Completo</h4>
+                                <p>Mais dicas de segurança profissional</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
         </section>
 

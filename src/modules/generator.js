@@ -538,6 +538,59 @@ export function initGenerator() {
         
         // Show security analysis
         securityAnalysis.style.display = 'block';
+        
+        // Update advanced security metrics
+        updateAdvancedSecurityMetrics(result);
+    }
+    
+    // Update advanced security metrics
+    function updateAdvancedSecurityMetrics(result) {
+        const scoreElement = document.getElementById('security-score');
+        const crackTimeElement = document.getElementById('security-crack-time');
+        const entropyElement = document.getElementById('security-entropy');
+        
+        if (scoreElement && result.strength) {
+            const score = calculateStrengthScore(result.password);
+            scoreElement.textContent = `${score}/100`;
+            scoreElement.style.color = getScoreColor(score);
+        }
+        
+        if (crackTimeElement && result.strength) {
+            crackTimeElement.textContent = result.strength.crackTime || 'Unknown';
+        }
+        
+        if (entropyElement) {
+            entropyElement.textContent = `${(result.entropy || 0).toFixed(1)} bits`;
+        }
+    }
+    
+    // Helper functions for security scoring
+    function calculateStrengthScore(password) {
+        let score = 0;
+        
+        // Length bonus
+        score += Math.min(password.length * 4, 40);
+        
+        // Character variety bonus
+        if (/[a-z]/.test(password)) score += 10;
+        if (/[A-Z]/.test(password)) score += 10;
+        if (/[0-9]/.test(password)) score += 10;
+        if (/[^a-zA-Z0-9]/.test(password)) score += 15;
+        
+        // Pattern penalty
+        if (/(.)\1{2,}/.test(password)) score -= 20;
+        if (/^[a-zA-Z]+$/.test(password)) score -= 15;
+        if (/^[0-9]+$/.test(password)) score -= 15;
+        
+        return Math.max(0, Math.min(100, score));
+    }
+    
+    function getScoreColor(score) {
+        if (score < 30) return 'var(--danger)';
+        if (score < 50) return 'var(--warning)';
+        if (score < 70) return '#ffa500';
+        if (score < 85) return 'var(--accent)';
+        return 'var(--primary)';
     }
 
     // Initialize with password mode
