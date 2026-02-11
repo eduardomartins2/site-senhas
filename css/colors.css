@@ -1,4 +1,24 @@
+/* Light Theme (Default) */
 :root {
+    --bg: #ffffff;
+    --bg-soft: #f8f9fa;
+    --surface: #ffffff;
+    --text: #2d3748;
+    --text-muted: #718096;
+    --primary: #3bd27f;
+    --primary-dark: #2fa76a;
+    --accent: #4da3ff;
+    --danger: #ff6b6b;
+    --warning: #f5a623;
+    --warning-bg: rgba(245, 166, 35, 0.1);
+    --warning-border: rgba(245, 166, 35, 0.3);
+    --border: #e2e8f0;
+    --shadow: 0 4px 18px rgba(0,0,0,0.1);
+    --input-bg: #ffffff;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
     --bg: #0f141a;
     --bg-soft: #161b22;
     --surface: #1c2631;
@@ -14,4 +34,23 @@
     --border: #26313c;
     --shadow: 0 4px 18px rgba(0,0,0,0.35);
     --input-bg: #0d1117;
+}
+
+/* Auto Theme (System Preference) */
+[data-theme="auto"] {
+    --bg: light-dark(#ffffff, #0f141a);
+    --bg-soft: light-dark(#f8f9fa, #161b22);
+    --surface: light-dark(#ffffff, #1c2631);
+    --text: light-dark(#2d3748, #e8eef4);
+    --text-muted: light-dark(#718096, #9aa5b4);
+    --primary: #3bd27f;
+    --primary-dark: #2fa76a;
+    --accent: #4da3ff;
+    --danger: #ff6b6b;
+    --warning: #f5a623;
+    --warning-bg: light-dark(rgba(245, 166, 35, 0.1), rgba(245, 166, 35, 0.1));
+    --warning-border: light-dark(rgba(245, 166, 35, 0.3), rgba(245, 166, 35, 0.3));
+    --border: light-dark(#e2e8f0, #26313c);
+    --shadow: light-dark(0 4px 18px rgba(0,0,0,0.1), 0 4px 18px rgba(0,0,0,0.35));
+    --input-bg: light-dark(#ffffff, #0d1117);
 }

@@ -1,13 +1,16 @@
 // main.js
-// Initialize UI collapse + generator + clipboard + vault view loading
+// Initialize UI collapse + generator + clipboard + vault view loading + theme
 
 import { initGenerator } from "./src/modules/generator.js";
 import { initCopyButton } from "./src/modules/clipboard.js";
 import { initVaultUI } from "./src/modules/vault/vault-ui.js";
+import { initTheme } from "./src/modules/theme.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Main loaded");
 
+    // Initialize theme first
+    initTheme();
     initGenerator();
     initCopyButton();
 
