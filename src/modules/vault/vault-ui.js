@@ -1,5 +1,5 @@
 import { generateSalt, deriveKey, encryptData, decryptData } from "./vault-crypto.js";
-import { loadVault, addEntry, updateEntry, deleteEntry, exportVault, importVault, mergeVault } from "./vault-storage.js";
+import { loadVault, addEntry, updateEntry, deleteEntry, exportVault, importVault, mergeVault, loadEncryptedVault, saveEncryptedVault } from "./vault-storage.js";
 
 const VAULT_KEY = "secure_vault";
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutos
@@ -252,7 +252,8 @@ export function initVaultUI() {
             ciphertext: arrayToBase64(new Uint8Array(encrypted.ciphertext))
         };
 
-        localStorage.setItem(VAULT_KEY, JSON.stringify(vaultToSave));
+        // Usar IndexedDB em vez de localStorage
+        await saveEncryptedVault(vaultToSave);
 
         alert("Cofre criado com sucesso!");
 
@@ -274,13 +275,13 @@ export function initVaultUI() {
         
         const pass = inputUnlockPass.value.trim();
 
-        const saved = localStorage.getItem(VAULT_KEY);
+        const saved = await loadEncryptedVault();
         if (!saved) {
             alert("Nenhum cofre existente. Crie um novo.");
             return;
         }
 
-        const vaultData = JSON.parse(saved);
+        const vaultData = saved; // Já é objeto, não precisa JSON.parse
 
         const salt = base64ToArray(vaultData.salt);
         const iv = base64ToArray(vaultData.iv);
@@ -336,6 +337,7 @@ export function initVaultUI() {
 
             console.log("Entry saved successfully");
 
+            // Recarregar do IndexedDB para garantir consistência
             const vault = await loadVault(window.__vault_key);
             
             if (!vault || !vault.entries) {
