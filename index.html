@@ -152,6 +152,52 @@
             </form>
         </section>
 
+        <!-- Password Vault -->
+        <section class="section-card vault-section">
+            <header class="section-header vault-header">
+                <div class="vault-header-content">
+                    <div class="vault-title">
+                        <h2>🔐 Cofre de Senhas</h2>
+                        <p class="vault-subtitle">Armazene suas senhas com segurança criptográfica</p>
+                    </div>
+                    <div class="vault-status" id="vault-status">
+                        <span class="status-indicator locked">🔒</span>
+                        <span class="status-text">Bloqueado</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="vault-content" id="vault-content">
+                <!-- Vault will be loaded here -->
+                <div class="vault-locked-state">
+                    <div class="lock-icon">🔐</div>
+                    <h3>Cofre Protegido</h3>
+                    <p>Para acessar suas senhas, crie uma palavra-passe mestra segura.</p>
+                    <button class="btn-primary" id="setup-vault-btn">
+                        Configurar Cofre
+                    </button>
+                    <div class="vault-features">
+                        <div class="feature">
+                            <span class="feature-icon">🛡️</span>
+                            <span>Criptografia AES-256</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔑</span>
+                            <span>Palavra-passe mestra</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">📱</span>
+                            <span>Sincronização local</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔍</span>
+                            <span>Busca rápida</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Security Information (toggle) -->
         <section class="section-card security-section">
             <header class="section-header">
